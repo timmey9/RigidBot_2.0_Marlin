@@ -126,7 +126,7 @@
 #define PIDTEMP
 #define BANG_MAX 256 // limits current to nozzle while in bang-bang mode; 256=full current
 #define PID_MAX 256 // limits current to nozzle while PID is active (see PID_FUNCTIONAL_RANGE below); 256=full current
-#define PWM_SCALER 1  //decrease PWM speed by a factor of PWM_SCALER
+#define PWM_SCALER 16  //decrease PWM speed by a factor of PWM_SCALER
 #ifdef PIDTEMP
   //#define PID_DEBUG // Sends debug data to the serial port.
   //#define PID_OPENLOOP 1 // Puts PID in open loop. M104/M140 sets the output power from 0 to PID_MAX
@@ -137,25 +137,10 @@
   #define PID_dT ((16.0 * 8.0)/(F_CPU / 64.0 / 256.0))*PWM_SCALER //sampling period of the temperature routine
 
 // If you are using a preconfigured hotend then you can use one of the value sets by uncommenting it
-// Ultimaker
-//    #define  DEFAULT_Kp 22.2
-//    #define  DEFAULT_Ki 1.08
-//    #define  DEFAULT_Kd 114
-
-// Makergear
-//    #define  DEFAULT_Kp 7.0
-//    #define  DEFAULT_Ki 0.1
-//    #define  DEFAULT_Kd 12
-
-// Mendel Parts V9 on 12V
-//    #define  DEFAULT_Kp 63.0
-//    #define  DEFAULT_Ki 2.25
-//    #define  DEFAULT_Kd 440
-
  //RigidBot New (PID Autotune didn't work)
  	#define  DEFAULT_Kp 10
- 	#define  DEFAULT_Ki 1.07
- 	#define  DEFAULT_Kd 260
+ 	#define  DEFAULT_Ki 6.07
+ 	#define  DEFAULT_Kd 150
 
 #endif // PIDTEMP
 
