@@ -533,7 +533,9 @@ void loop()
 void optional_layerchange_settings(int layerNumber){
   char strTemp[20];
   if(display_layer_num){ // if "display layer numbe" is enabled, then insert M117 command to display the layer number
-    sprintf_P(strTemp, PSTR("M117 Layer:%d"), layerNumber);
+    sprintf(strTemp, ftostr31(current_position[Z_AXIS]));
+    sprintf_P(strTemp, PSTR("M117 Z:%s"), ftostr31(current_position[Z_AXIS]) ); 
+    //sprintf_P(strTemp, PSTR("M117 Layer:%d"), layerNumber);
     enquecommand(strTemp);
   }
   if(autohome_between_layers && (layerNumber%(every_other_layer+1))==0 ){
@@ -550,8 +552,6 @@ void optional_layerchange_settings(int layerNumber){
     enquecommand(strTemp);
     
     // return X and Y to original position before the pause
-    //sprintf_P(strTemp, PSTR("G0 F9000"));
-    //enquecommand(strTemp);
     sprintf_P(strTemp, PSTR("G0 F9000 X%f Y%f"), oldX, oldY);
     enquecommand(strTemp);
   }
@@ -567,12 +567,23 @@ void end_of_print_script(){
   char strTemp[20];
 
   // move bed to front
-  //sprintf_P(strTemp, PSTR("G0 F9000"));
-  //enquecommand(strTemp);
-  sprintf_P(strTemp, PSTR("G0 F9000 Y%d X0.0"), Y_MAX_POS);
+  sprintf_P(strTemp, PSTR("G0 F9000 Y%d X5.0"), Y_MAX_POS);
+  enquecommand(strTemp);
+
+  // turn off part fans
+  sprintf_P(strTemp, PSTR("M107"));
+  enquecommand(strTemp);
+
+  // disable stepper motors
+  sprintf_P(strTemp, PSTR("M18"));
+  enquecommand(strTemp);
+
+  sprintf_P(strTemp, PSTR("M117 Print Done!"));
   enquecommand(strTemp);
 }
 
+float curr_z_height = 0;
+static bool was_printing = false;
 void get_command()
 {
   while( MYSERIAL.available() > 0  && buflen < BUF_FILL_SIZE) {
@@ -585,6 +596,7 @@ void get_command()
       if(comment_count){
         // comment buffer contains ";layer"
         int layerNumber = -1;
+        /*
         if(strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  ){
           char* tempptr = strchr(commentbuffer, 'r')+1; // +1 skips the space/colon before the (layer) number
           layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
@@ -596,9 +608,10 @@ void get_command()
           layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
           optional_layerchange_settings(layerNumber);
         }
+        /*
         else if(  (strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd')  && strchr(commentbuffer, 'd')+1 == strchr(commentbuffer, ' ') && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'G') && strchr(commentbuffer, 'G')+1 == strchr(commentbuffer, 'C') && strchr(commentbuffer, 'C')+1 == strchr(commentbuffer, 'o') ) || (strchr(commentbuffer, 'l')+1 == strchr(commentbuffer, 'a') && strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  && strchr(commentbuffer, 'r')+1 == strchr(commentbuffer, ' ')  && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd') ) ){       
           end_of_print_script();
-        }
+        }*/
         
 
         for(int i = 0; i < comment_count; i++) commentbuffer[i] = 0; // clear buffer
@@ -715,9 +728,14 @@ void get_command()
   }
   #ifdef SDSUPPORT
   if(!card.sdprinting || serial_count!=0){
+    if(was_printing){
+      was_printing = false;
+      end_of_print_script();
+    }
     return;
   }
   while( !card.eof()  && buflen < BUF_FILL_SIZE) {
+    was_printing = true;
     int16_t n=card.get();
     serial_char = (char)n;
     if(serial_char == '\n' ||
@@ -729,6 +747,8 @@ void get_command()
       int layerNumber = -1;
       if(comment_count){
         // comment buffer contains ";layer"
+        if(curr_z_height != current_position[Z_AXIS]) optional_layerchange_settings(0);
+        /*
         if(strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  ){
           char* tempptr = strchr(commentbuffer, 'r')+1; // +1 skips the space/colon before the (layer) number
           int layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
@@ -740,9 +760,10 @@ void get_command()
           int layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
           optional_layerchange_settings(layerNumber);
         }
+        /*
         else if(  (strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd')  && strchr(commentbuffer, 'd')+1 == strchr(commentbuffer, ' ') && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'G') && strchr(commentbuffer, 'G')+1 == strchr(commentbuffer, 'C') && strchr(commentbuffer, 'C')+1 == strchr(commentbuffer, 'o') ) || (strchr(commentbuffer, 'l')+1 == strchr(commentbuffer, 'a') && strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  && strchr(commentbuffer, 'r')+1 == strchr(commentbuffer, ' ')  && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd') ) ){       
           end_of_print_script();
-        }
+        }*/
 
         for(int i = 0; i < comment_count; i++) commentbuffer[i] = 0; // clear buffer
         comment_count = 0;
@@ -792,7 +813,6 @@ void get_command()
       else commentbuffer[comment_count++] = serial_char;
     }
   }
-
   #endif //SDSUPPORT
 
 }
