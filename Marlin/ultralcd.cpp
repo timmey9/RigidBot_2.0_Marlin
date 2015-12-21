@@ -1406,13 +1406,13 @@ Add misc settings menu
 -make timing more accurate
 */
 
- bool display_layer_num = false;
+ bool display_layer_num = true;
  bool autohome_between_layers = false;
  int every_other_layer = 0;
  bool disable_hbp_at_height = false;
  int height_var = 1;
  int new_bed_temp = 0;
- bool detect_end_of_print = false;
+ bool detect_end_of_print = true;
 
 static void lcd_do_nothing(){
     return;

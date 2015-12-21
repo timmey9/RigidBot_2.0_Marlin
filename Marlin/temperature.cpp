@@ -1014,9 +1014,8 @@ ISR(TIMER0_COMPB_vect)
   static unsigned int soft_pwm_b;
   #endif
   
-  #define SCALER_VAR 16
   if(pwm_count == 0){
-    soft_pwm_0 = soft_pwm[0]*SCALER_VAR;
+    soft_pwm_0 = soft_pwm[0]*PWM_SCALER;
     if(soft_pwm_0 > 0) WRITE(HEATER_0_PIN,1);
     #if EXTRUDERS > 1
     soft_pwm_1 = soft_pwm[1];
@@ -1027,11 +1026,11 @@ ISR(TIMER0_COMPB_vect)
     if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1);
     #endif
     #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-    soft_pwm_b = soft_pwm_bed*SCALER_VAR;
+    soft_pwm_b = soft_pwm_bed*PWM_SCALER;
     if(soft_pwm_b > 0) WRITE(HEATER_BED_PIN,1);
     #endif
     #ifdef FAN_SOFT_PWM
-    soft_pwm_fan =(unsigned char) fanSpeed*SCALER_VAR;
+    soft_pwm_fan =(unsigned char) fanSpeed*PWM_SCALER;
     if(soft_pwm_fan > 0) WRITE(FAN_PIN,1);
     #endif
   }
@@ -1050,8 +1049,9 @@ ISR(TIMER0_COMPB_vect)
   #endif
   
   pwm_count++;
-  pwm_count &= 0x7ff;
-  
+
+  pwm_count &= (0x80*PWM_SCALER -1);
+
   switch(temp_state) {
     case 0: // Prepare TEMP_0
       #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
