@@ -64,7 +64,7 @@
   extern int new_bed_temp;
   extern bool detect_end_of_print;
   
-    
+  
   void lcd_buzz(long duration,uint16_t freq);
   bool lcd_clicked();
 

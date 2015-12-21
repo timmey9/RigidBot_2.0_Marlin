@@ -14,7 +14,7 @@
 //#endif
 //#if MOTHERBOARD == RIGID_BOARD
 ////#define OPT_SW_1           48
-////#define OPT_SW_2      b     47
+////#define OPT_SW_2           47
 //
 ////#define EX2_ENABLED        (PIND & _BV(PB2) PORTD&0x20==0)
 //#define EX2_ENABLED        (PIND & _BV(PIND5) == 0)
@@ -307,8 +307,8 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 
 //The ASCII buffer for recieving from the serial:
 #define MAX_CMD_SIZE 96
-#define BUFSIZE 10 // originally the buffer size was set to 8
-#define BUF_FILL_SIZE 6
+#define BUFSIZE 6 // originally the buffer size was set to 8
+#define BUF_FILL_SIZE 2
 
 
 // Firmware based and LCD controled retract
