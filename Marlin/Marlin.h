@@ -20,6 +20,7 @@
 #ifdef RIGIDBOARD
 //For DAC support, only used if #define DAC_DRIVER found in Configuration.h
 #include "mcp4728.h"
+#include "adp7142.h"
 #endif
 
 #include "fastio.h"
@@ -167,9 +168,8 @@ void Stop();
 
 bool IsStopped();
 
-//void inject_command(const char* cmd); // tell the printer to stop reading from the que and read an injected command, then return to the que.
-int enquecommand(const char *cmd); //put an ascii command at the end of the current buffer.
-int enquecommand_P(const char *cmd); //put an ascii command at the end of the current buffer, read from flash
+void enquecommand(const char *cmd); //put an ascii command at the end of the current buffer.
+void enquecommand_P(const char *cmd); //put an ascii command at the end of the current buffer, read from flash
 void prepare_arc_move(char isclockwise);
 void clamp_to_software_endstops(float target[3]);
 

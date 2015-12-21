@@ -307,9 +307,8 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 
 //The ASCII buffer for recieving from the serial:
 #define MAX_CMD_SIZE 96
-#define BUFSIZE 6 // originally the buffer size was set to 8
-#define BUF_FILL_SIZE 2
-
+#define BUFSIZE 8
+#define BUF_FILL_SIZE 4
 
 // Firmware based and LCD controled retract
 // M207 and M208 can be used to define parameters for the retraction. 

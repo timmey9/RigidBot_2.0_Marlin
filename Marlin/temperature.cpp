@@ -751,7 +751,7 @@ void tp_init()
   // Use timer0 for temperature measurement
   // Interleave temperature interrupt with millies interrupt
   OCR0B = 128;
-  TIMSK0 |= (1<<OCIE0B);  // enable interrupt 
+  TIMSK0 |= (1<<OCIE0B);  // enable interrupt
   
   // Wait for temperature measurement to settle
   delay(250);
@@ -1012,28 +1012,37 @@ ISR(TIMER0_COMPB_vect)
   #endif
   #if HEATER_BED_PIN > -1
   static unsigned int soft_pwm_b;
+  static unsigned int pwn_count_b = 1;
   #endif
   
+
   if(pwm_count == 0){
-    soft_pwm_0 = soft_pwm[0]*PWM_SCALER;
+    soft_pwm_0 = soft_pwm[0];
     if(soft_pwm_0 > 0) WRITE(HEATER_0_PIN,1);
     #if EXTRUDERS > 1
     soft_pwm_1 = soft_pwm[1];
     if(soft_pwm_1 > 0) WRITE(HEATER_1_PIN,1);
     #endif
+    
     #if EXTRUDERS > 2
     soft_pwm_2 = soft_pwm[2];
     if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1);
     #endif
-    #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-    soft_pwm_b = soft_pwm_bed*PWM_SCALER;
-    if(soft_pwm_b > 0) WRITE(HEATER_BED_PIN,1);
-    #endif
+    
     #ifdef FAN_SOFT_PWM
-    soft_pwm_fan =(unsigned char) fanSpeed*PWM_SCALER;
+    soft_pwm_fan =(unsigned char) fanSpeed;
     if(soft_pwm_fan > 0) WRITE(FAN_PIN,1);
     #endif
   }
+  
+  #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
+  #define SCALER_VAR 16
+  if(pwn_count_b == 0){
+    soft_pwm_b = soft_pwm_bed*SCALER_VAR;
+    if(soft_pwm_b > 0) WRITE(HEATER_BED_PIN,1);  
+  }
+  #endif
+  
   if(soft_pwm_0 <= pwm_count) WRITE(HEATER_0_PIN,0);
   #if EXTRUDERS > 1
   if(soft_pwm_1 <= pwm_count) WRITE(HEATER_1_PIN,0);
@@ -1042,16 +1051,17 @@ ISR(TIMER0_COMPB_vect)
   if(soft_pwm_2 <= pwm_count) WRITE(HEATER_2_PIN,0);
   #endif
   #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-  if(soft_pwm_b <= pwm_count) WRITE(HEATER_BED_PIN,0);
+  if(soft_pwm_b <= pwn_count_b) WRITE(HEATER_BED_PIN,0);
   #endif
   #ifdef FAN_SOFT_PWM
   if(soft_pwm_fan <= pwm_count) WRITE(FAN_PIN,0);
   #endif
   
   pwm_count++;
-
-  pwm_count &= (0x80*PWM_SCALER -1);
-
+  pwn_count_b++;
+  pwm_count &= 0x7f;
+  pwn_count_b &= 0x7ff;
+  
   switch(temp_state) {
     case 0: // Prepare TEMP_0
       #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)

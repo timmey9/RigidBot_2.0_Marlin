@@ -4,7 +4,6 @@
 //	Uncomment the following options for your machine
 //#define	RIGIDBOT_BIG
 //#define	RIGIDBOT_DUAL_EXTRUDER
-//#define RIGIDBOT_XL
 
 #define RIGIDBOARD
 
@@ -35,21 +34,40 @@
 //#define BAUDRATE 250000
 #define BAUDRATE 115200
 
-
-
-
+//// The following define selects which electronics board you have. Please choose the one that matches your setup
+// 10 = Gen7 custom (Alfons3 Version) "https://github.com/Alfons3/Generation_7_Electronics"
+// 11 = Gen7 v1.1, v1.2 = 11
+// 12 = Gen7 v1.3
+// 13 = Gen7 v1.4
+// 3  = MEGA/RAMPS up to 1.2 = 3
+// 33 = RAMPS 1.3 / 1.4 (Power outputs: Extruder, Bed, Fan)
+// 34 = RAMPS 1.3 / 1.4 (Power outputs: Extruder0, Extruder1, Bed)
+// 4  = Duemilanove w/ ATMega328P pin assignment
+// 5  = Gen6
+// 51 = Gen6 deluxe
+// 6  = Sanguinololu < 1.2
+// 62 = Sanguinololu 1.2 and above
+// 63 = Melzi
+// 64 = STB V1.1
+// 7  = Ultimaker
+// 71 = Ultimaker (Older electronics. Pre 1.5.4. This is rare)
+// 8  = Teensylu
+// 80 = Rumba
+// 81 = Printrboard (AT90USB1286)
+// 82 = Brainwave (AT90USB646)
+// 9  = Gen3+
+// 70 = Megatronics
+// 701= Megatronics v2.0
+// 702= Minitronics v1.0
+// 90 = Alpha OMCA board
+// 91 = Final OMCA board
+// 301 = Rambo
 #define RIGID_BOARD		42
 
 #ifndef MOTHERBOARD
+//#define MOTHERBOARD 34
 #define MOTHERBOARD RIGID_BOARD
 #endif
-
-
-
-//#define RIGIDBOT_BIG         // setup length, width, and height for the big heated bed
-//#define RIGIDBOT_DUAL_EXTRUDER // setup RigidBot for dual extruders
-
-
 
 // This defines the number of extruders
 #ifdef RIGIDBOT_DUAL_EXTRUDER
@@ -127,7 +145,6 @@
 #define PIDTEMP
 #define BANG_MAX 256 // limits current to nozzle while in bang-bang mode; 256=full current
 #define PID_MAX 256 // limits current to nozzle while PID is active (see PID_FUNCTIONAL_RANGE below); 256=full current
-#define PWM_SCALER 16  //decrease PWM speed by a factor of PWM_SCALER
 #ifdef PIDTEMP
   //#define PID_DEBUG // Sends debug data to the serial port.
   //#define PID_OPENLOOP 1 // Puts PID in open loop. M104/M140 sets the output power from 0 to PID_MAX
@@ -135,13 +152,28 @@
                                   // is more then PID_FUNCTIONAL_RANGE then the PID will be shut off and the heater will be set to min/max.
   #define PID_INTEGRAL_DRIVE_MAX 255  //limit for the integral term
   #define K1 0.95 //smoothing factor withing the PID
-  #define PID_dT ((16.0 * 8.0)/(F_CPU / 64.0 / 256.0))*PWM_SCALER //sampling period of the temperature routine
+  #define PID_dT ((16.0 * 8.0)/(F_CPU / 64.0 / 256.0)) //sampling period of the temperature routine
 
 // If you are using a preconfigured hotend then you can use one of the value sets by uncommenting it
+// Ultimaker
+//    #define  DEFAULT_Kp 22.2
+//    #define  DEFAULT_Ki 1.08
+//    #define  DEFAULT_Kd 114
+
+// Makergear
+//    #define  DEFAULT_Kp 7.0
+//    #define  DEFAULT_Ki 0.1
+//    #define  DEFAULT_Kd 12
+
+// Mendel Parts V9 on 12V
+//    #define  DEFAULT_Kp 63.0
+//    #define  DEFAULT_Ki 2.25
+//    #define  DEFAULT_Kd 440
+
  //RigidBot New (PID Autotune didn't work)
  	#define  DEFAULT_Kp 10
- 	#define  DEFAULT_Ki 6.07
- 	#define  DEFAULT_Kd 150
+ 	#define  DEFAULT_Ki 3.00//1.07
+ 	#define  DEFAULT_Kd 400.0//260
 
 #endif // PIDTEMP
 
@@ -245,7 +277,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define DISABLE_Z false
 #define DISABLE_E false // For all extruders
 
-#define INVERT_X_DIR false    // for Mendel set to false, for Orca set to true ***************** should be false for RBot 2.0
+#define INVERT_X_DIR false    // for Mendel set to false, for Orca set to true
 #define INVERT_Y_DIR false    // for Mendel set to true, for Orca set to false
 #define INVERT_Z_DIR false     // for Mendel set to false, for Orca set to true
 #define INVERT_E0_DIR true   // for direct drive extruder v9 set to true, for geared extruder set to false
@@ -266,20 +298,12 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #ifdef RIGIDBOT_BIG
 #define X_MAX_BASE 406
 #define Y_MAX_BASE 304
-#ifdef RIGIDBOT_XL
-#define Z_MAX_BASE 355
-#else
 #define Z_MAX_BASE 254
-#endif
 #define X_DUAL_REDUCTION 57
 #else
 #define X_MAX_BASE 254
 #define Y_MAX_BASE 248
-#ifdef RIGIDOBT_XL
-#define Z_MAX_BASE 355
-#else
 #define Z_MAX_BASE 254
-#endif
 #define X_DUAL_REDUCTION 57
 #endif
 
@@ -374,15 +398,14 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 // Preheat Constants
 #define PLA_PREHEAT_HOTEND_TEMP		200
-#define PLA_PREHEAT_HPB_TEMP		40
-#define PLA_PREHEAT_FAN_SPEED		0   // Insert Value between 0 and 255
+#define PLA_PREHEAT_HPB_TEMP		    40
+#define PLA_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
 #define ABS_PREHEAT_HOTEND_TEMP		230
-#define ABS_PREHEAT_HPB_TEMP		70
-#define ABS_PREHEAT_FAN_SPEED		0   // Insert Value between 0 and 255
+#define ABS_PREHEAT_HPB_TEMP		    70
+#define ABS_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
-#define LCD_HAS_SLOW_BUTTONS // increases the debounce time so you don't get double clicks when the user actually clicked once.
-
+#define LCD_HAS_SLOW_BUTTONS // increases the debounce time so you don't get double clicks when the user actually clicked once. 
 //LCD and SD support
 //#define ULTRA_LCD  //general lcd support, also 16x2
 //#define DOGLCD  // Support for SPI LCD 128x64 (Controller ST7565R graphic Display Family)

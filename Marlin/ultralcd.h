@@ -54,13 +54,13 @@
   extern int absPreheatHotendTemp;
   extern int absPreheatHPBTemp;
   extern int absPreheatFanSpeed;
-
+    
   // misc settings
   extern bool display_layer_num;
   extern bool autohome_between_layers;
-  extern int every_other_layer;
+  extern float every_other_layer;
   extern bool disable_hbp_at_height;
-  extern int height_var;
+  extern float height_var;
   extern int new_bed_temp;
   extern bool detect_end_of_print;
   

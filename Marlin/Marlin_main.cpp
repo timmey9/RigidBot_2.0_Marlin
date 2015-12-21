@@ -48,6 +48,8 @@
 #include <SPI.h>
 #endif
 
+#include "adp7142.h"
+
 #define VERSION_STRING  "1.0.0"
 
 // look here for descriptions of gcodes: http://linuxcnc.org/handbook/gcode/g-code.html
@@ -201,14 +203,6 @@ static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
 
 static bool relative_mode = false;  //Determines Absolute or Relative Coordinates
 
-#define COMMENT_BUF_SIZE 30
-static char commentbuffer[COMMENT_BUF_SIZE]; // this buffer fills up with the comments.  It is mostly unused, except to look for certain comments and replace them with Gcode commands.
-static int comment_count = 0;
-
-static bool command_injected = false; //flag to indicate whether to read the que or read the injected command
-char injected_command[MAX_CMD_SIZE]; //1 line buffer for the command to be injected
-
-
 static char cmdbuffer[BUFSIZE][MAX_CMD_SIZE];
 static bool fromsd[BUFSIZE];
 static int bufindr = 0;
@@ -235,6 +229,7 @@ unsigned long stoptime=0;
 
 static uint8_t tmp_extruder;
 
+//adp7142 bedLeds = adp7142();
 
 bool Stopped=false;
 
@@ -276,17 +271,7 @@ extern "C"{
 //adds an command to the main command buffer
 //thats really done in a non-safe way.
 //needs overworking someday
-
-// inject a command into the que so it runs immediately
-/*void inject_command(const char* cmd){
-  if(buflen <= 1) enquecommand(cmd); // the buffer is already empty (except for the current command), just que the command and it will run next.  No need to inject the command
-  else {
-    strcpy(injected_command,cmd); // copy command into the injected_command buffer
-    command_injected = true; // set the flag so that 'void loop()' knows to read the injected_command next instead of the cmdbuffer
-  }
-}*/
-
-int enquecommand(const char *cmd)
+void enquecommand(const char *cmd)
 {
   if(buflen < BUFSIZE)
   {
@@ -299,10 +284,9 @@ int enquecommand(const char *cmd)
     bufindw= (bufindw + 1)%BUFSIZE;
     buflen += 1;
   }
-  else return -1;
 }
 
-int enquecommand_P(const char *cmd)
+void enquecommand_P(const char *cmd)
 {
   if(buflen < BUFSIZE)
   {
@@ -315,7 +299,6 @@ int enquecommand_P(const char *cmd)
     bufindw= (bufindw + 1)%BUFSIZE;
     buflen += 1;
   }
-  else return -1;
 }
 
 void setup_killpin()
@@ -463,21 +446,6 @@ void loop()
   #ifdef SDSUPPORT
   card.checkautostart(false);
   #endif
-
-  // inject commands between buffer reads
-  bool processing_injected_command = false;
-  
-  /*if(command_injected){
-    command_injected = false;
-    processing_injected_command = true;
-    // swap the current command with the inject command, which is swap injected_command and cmdbuffer[bufindr]
-    char buf_copy[MAX_CMD_SIZE];
-    strcpy(buf_copy,&(cmdbuffer[bufindr][0]));
-    strcpy(&(cmdbuffer[bufindr][0]),injected_command);
-    strcpy(injected_command,buf_copy);
-  }*/
-
-  // read buffer
   if(buflen)
   {
     #ifdef SDSUPPORT
@@ -508,20 +476,8 @@ void loop()
     #else
       process_commands();
     #endif //SDSUPPORT
-      /*
-    if(processing_injected_command) {
-      // put the skipped command back in place
-      strcpy(&(cmdbuffer[bufindr][0]),injected_command);
-
-      // done processing the injected command
-      processing_injected_command = false;
-
-      // don't increment 'bufindr' or decrement 'buflen' because a command was injected
-    } 
-    else{*/
-      buflen = (buflen-1);
-      bufindr = (bufindr + 1)%BUFSIZE;
-    //}
+    buflen = (buflen-1);
+    bufindr = (bufindr + 1)%BUFSIZE;
   }
   //check heater every n milliseconds
   manage_heater();
@@ -530,14 +486,15 @@ void loop()
   lcd_update();
 }
 
+/*
 void optional_layerchange_settings(int layerNumber){
   char strTemp[20];
+  
   if(display_layer_num){ // if "display layer numbe" is enabled, then insert M117 command to display the layer number
-    sprintf(strTemp, ftostr31(current_position[Z_AXIS]));
-    sprintf_P(strTemp, PSTR("M117 Z:%s"), ftostr31(current_position[Z_AXIS]) ); 
-    //sprintf_P(strTemp, PSTR("M117 Layer:%d"), layerNumber);
+    sprintf_P(strTemp, PSTR("M117 Layer: %d"), layerNumber);
     enquecommand(strTemp);
   }
+  
   if(autohome_between_layers && (layerNumber%(every_other_layer+1))==0 ){
     float oldX = current_position[X_AXIS];
     float oldY = current_position[Y_AXIS];
@@ -560,69 +517,75 @@ void optional_layerchange_settings(int layerNumber){
     sprintf_P(strTemp, PSTR("M140 S%d"), new_bed_temp); // turn bed off
     enquecommand(strTemp);
   }
-}
+}*/
 
 void end_of_print_script(){
   if(!detect_end_of_print) return;
   char strTemp[20];
 
   // move bed to front
-  sprintf_P(strTemp, PSTR("G0 F9000 Y%d X5.0"), Y_MAX_POS);
-  enquecommand(strTemp);
-
-  // turn off part fans
-  sprintf_P(strTemp, PSTR("M107"));
-  enquecommand(strTemp);
-
-  // disable stepper motors
-  sprintf_P(strTemp, PSTR("M18"));
-  enquecommand(strTemp);
-
-  sprintf_P(strTemp, PSTR("M117 Print Done!"));
+  sprintf_P(strTemp, PSTR("G0 F9000 Y%d X0.0"), Y_MAX_POS);
   enquecommand(strTemp);
 }
 
-float curr_z_height = 0;
-static bool was_printing = false;
+#include <math.h>
+static float curr_z_height = 0;
+static float prev_mod_height = 0;
+static float curr_mod_height = 0;
 void get_command()
 {
   while( MYSERIAL.available() > 0  && buflen < BUF_FILL_SIZE) {
     serial_char = MYSERIAL.read();
-    if(serial_char == '\n' || serial_char == '\r' || (serial_char == ':' && comment_mode == false) ||
+    if(serial_char == '\n' ||
+       serial_char == '\r' ||
+       (serial_char == ':' && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1) )
     {
       
-      // read the comment buffer and decide what to do with the information there
-      if(comment_count){
-        // comment buffer contains ";layer"
-        int layerNumber = -1;
-        /*
-        if(strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  ){
-          char* tempptr = strchr(commentbuffer, 'r')+1; // +1 skips the space/colon before the (layer) number
-          layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
-          optional_layerchange_settings(layerNumber);
-        }
-        // comment buffer contains ";LAYER"
-        else if(strchr(commentbuffer, 'L')+1 == strchr(commentbuffer, 'A') && strchr(commentbuffer, 'A')+1 == strchr(commentbuffer, 'Y') && strchr(commentbuffer, 'Y')+1 == strchr(commentbuffer, 'E') && strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'R')  ){       
-          char* tempptr = strchr(commentbuffer, 'R')+1; // +1 skips the space/colon before the (layer) number
-          layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
-          optional_layerchange_settings(layerNumber);
-        }
-        /*
-        else if(  (strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd')  && strchr(commentbuffer, 'd')+1 == strchr(commentbuffer, ' ') && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'G') && strchr(commentbuffer, 'G')+1 == strchr(commentbuffer, 'C') && strchr(commentbuffer, 'C')+1 == strchr(commentbuffer, 'o') ) || (strchr(commentbuffer, 'l')+1 == strchr(commentbuffer, 'a') && strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  && strchr(commentbuffer, 'r')+1 == strchr(commentbuffer, ' ')  && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd') ) ){       
-          end_of_print_script();
-        }*/
+      // detect layer changes
+      if(curr_z_height != current_position[Z_AXIS]){
+        MYSERIAL.println("Z change");
         
+        curr_z_height = current_position[Z_AXIS];
+      
+        prev_mod_height = curr_mod_height;
+        curr_mod_height = fmod(current_position[Z_AXIS], every_other_layer);
 
-        for(int i = 0; i < comment_count; i++) commentbuffer[i] = 0; // clear buffer
-        comment_count = 0;
-        comment_mode = false;
+        // home X and Y axis between layers
+        if(autohome_between_layers && curr_mod_height < prev_mod_height ){
+          MYSERIAL.println("Home at layer change");
+          float oldX = current_position[X_AXIS];
+          float oldY = current_position[Y_AXIS];
+          float oldZ = current_position[Z_AXIS];
+          float oldE = current_position[E_AXIS];
+          char strTemp[20];
+          // move X and Y axis to zero quickly
+          sprintf_P(strTemp, PSTR("G0 F9000 Y0.0 X0.0"));
+          enquecommand(strTemp);
+          
+          // home Y, then X, just to make sure nothing was messed up
+          sprintf_P(strTemp, PSTR("G28 Y X"));
+          enquecommand(strTemp);
+          
+          // return X and Y to original position before the pause
+          sprintf_P(strTemp, PSTR("G0 F9000 X%f Y%f"), oldX, oldY);
+          enquecommand(strTemp);
+        }
+      }
+
+      // disable hbp at height
+      if(disable_hbp_at_height && current_position[Z_AXIS] > height_var){ // if "disable heated bed at height" is enabled, and the height is greater than the set height, then insert command to turn off heated bed
+        MYSERIAL.println("HBP turned off");
+        char strTemp[20];
+        sprintf_P(strTemp, PSTR("M140 S%d"), new_bed_temp); // change bed temp
+        enquecommand(strTemp);
       }
 
       if(!serial_count) { //if empty line
         comment_mode = false; //for new command
         return;
       }
+
       cmdbuffer[bufindw][serial_count] = 0; //terminate string
       if(!comment_mode){
         comment_mode = false; //for new command
@@ -711,31 +674,19 @@ void get_command()
       }
       serial_count = 0; //clear buffer
     }
-    else // if not serial_char == '\n' or other end of command character
+    else
     {
       if(serial_char == ';') {
-        comment_mode = true;
-        comment_count = 0;
+       comment_mode = true;
       }
-      
       if(!comment_mode) cmdbuffer[bufindw][serial_count++] = serial_char;
-      else commentbuffer[comment_count++] = serial_char;
     }
-    //for debug purposes
-    //String temp = cmdbuffer[bufindw];
-    //MYSERIAL.println(temp);
-    
   }
   #ifdef SDSUPPORT
   if(!card.sdprinting || serial_count!=0){
-    if(was_printing){
-      was_printing = false;
-      end_of_print_script();
-    }
     return;
   }
-  while( !card.eof()  && buflen < BUF_FILL_SIZE) {
-    was_printing = true;
+  while( !card.eof()  && buflen < BUFSIZE) {
     int16_t n=card.get();
     serial_char = (char)n;
     if(serial_char == '\n' ||
@@ -743,35 +694,6 @@ void get_command()
        (serial_char == ':' && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1)||n==-1)
     {
-      
-      int layerNumber = -1;
-      if(comment_count){
-        // comment buffer contains ";layer"
-        if(curr_z_height != current_position[Z_AXIS]) optional_layerchange_settings(0);
-        /*
-        if(strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  ){
-          char* tempptr = strchr(commentbuffer, 'r')+1; // +1 skips the space/colon before the (layer) number
-          int layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
-          optional_layerchange_settings(layerNumber);
-        }
-        // comment buffer contains ";LAYER"
-        else if(strchr(commentbuffer, 'L')+1 == strchr(commentbuffer, 'A') && strchr(commentbuffer, 'A')+1 == strchr(commentbuffer, 'Y') && strchr(commentbuffer, 'Y')+1 == strchr(commentbuffer, 'E') && strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'R')  ){       
-          char* tempptr = strchr(commentbuffer, 'R')+1; // +1 skips the space/colon before the (layer) number
-          int layerNumber = strtol(&commentbuffer[tempptr-commentbuffer+1],NULL,10);
-          optional_layerchange_settings(layerNumber);
-        }
-        /*
-        else if(  (strchr(commentbuffer, 'E')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd')  && strchr(commentbuffer, 'd')+1 == strchr(commentbuffer, ' ') && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'G') && strchr(commentbuffer, 'G')+1 == strchr(commentbuffer, 'C') && strchr(commentbuffer, 'C')+1 == strchr(commentbuffer, 'o') ) || (strchr(commentbuffer, 'l')+1 == strchr(commentbuffer, 'a') && strchr(commentbuffer, 'a')+1 == strchr(commentbuffer, 'y') && strchr(commentbuffer, 'y')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'r')  && strchr(commentbuffer, 'r')+1 == strchr(commentbuffer, ' ')  && strchr(commentbuffer, ' ')+1 == strchr(commentbuffer, 'e') && strchr(commentbuffer, 'e')+1 == strchr(commentbuffer, 'n') && strchr(commentbuffer, 'n')+1 == strchr(commentbuffer, 'd') ) ){       
-          end_of_print_script();
-        }*/
-
-        for(int i = 0; i < comment_count; i++) commentbuffer[i] = 0; // clear buffer
-        comment_count = 0;
-        comment_mode = false;
-      }
-
-      
-
       if(card.eof()){
         SERIAL_PROTOCOLLNPGM(MSG_FILE_PRINTED);
         stoptime=millis();
@@ -804,15 +726,11 @@ void get_command()
     }
     else
     {
-      if(serial_char == ';') {
-        comment_mode = true;
-        comment_count = 0;
-      }
-      
+      if(serial_char == ';') comment_mode = true;
       if(!comment_mode) cmdbuffer[bufindw][serial_count++] = serial_char;
-      else commentbuffer[comment_count++] = serial_char;
     }
   }
+
   #endif //SDSUPPORT
 
 }
@@ -899,31 +817,6 @@ void process_commands()
   unsigned long codenum; //throw away variable
   char *starpos = NULL;
 
-  /*
-  // process comments for layer numbers
-  if(strchr(cmdbuffer[bufindr], ';') != NULL){ // this line has a comment, check if it tells the layer number
-    SERIAL_ECHOPGM("comment found 2");
-
-    
-    // check if the comment contains "ayer" in lower case; ignore the 'L' in "Layer" because it could be either lower case or upper case
-    if(strchr(cmdbuffer[bufindr], 'a')+1 == strchr(cmdbuffer[bufindr], 'y') && strchr(cmdbuffer[bufindr], 'y')+1 == strchr(cmdbuffer[bufindr], 'e') && strchr(cmdbuffer[bufindr], 'e')+1 == strchr(cmdbuffer[bufindr], 'r')  ){
-      strchr_pointer = strchr(cmdbuffer[bufindr], 'r')+1; // +1 skips the space/colon before the (layer) number
-      int layerNumber = code_value_long();
-      char strTemp[20];
-      sprintf_P(strTemp, PSTR("M117 Layer:%d"), layerNumber);
-      enquecommand(strTemp);
-    }
-    // check if the comment contains "LAYER" in upper case
-    else if(strchr(cmdbuffer[bufindr], 'L')+1 == strchr(cmdbuffer[bufindr], 'A') && strchr(cmdbuffer[bufindr], 'A')+1 == strchr(cmdbuffer[bufindr], 'Y') && strchr(cmdbuffer[bufindr], 'Y')+1 == strchr(cmdbuffer[bufindr], 'E') && strchr(cmdbuffer[bufindr], 'E')+1 == strchr(cmdbuffer[bufindr], 'R')  ){
-      strchr_pointer = strchr(cmdbuffer[bufindr], 'R')+1; // +1 skips the space/colon before the (layer) number
-      int layerNumber = code_value_long();
-      char strTemp[20];
-      sprintf_P(strTemp, PSTR("M117 Layer:%d"), layerNumber);
-      enquecommand(strTemp);
-    }
-  }
-
-  else */
   if(code_seen('G'))
   {
     switch((int)code_value())
@@ -1302,6 +1195,8 @@ void process_commands()
       break;
     case 140: // M140 set bed temp
       if (code_seen('S')) setTargetBed(code_value());
+      //bedLeds.setPWM0(128);
+      //bedLeds.setLS0(BLINK0);
       break;
     case 105 : // M105
       if(setTargetedHotend(105)){
