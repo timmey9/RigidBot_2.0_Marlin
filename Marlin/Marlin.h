@@ -20,7 +20,7 @@
 #ifdef RIGIDBOARD
 //For DAC support, only used if #define DAC_DRIVER found in Configuration.h
 #include "mcp4728.h"
-#include "adp7142.h"
+#include "pca9551.h"
 #endif
 
 #include "fastio.h"

@@ -48,7 +48,7 @@
 #include <SPI.h>
 #endif
 
-#include "adp7142.h"
+#include "pca9551.h"
 
 #define VERSION_STRING  "1.0.0"
 
@@ -229,7 +229,7 @@ unsigned long stoptime=0;
 
 static uint8_t tmp_extruder;
 
-//adp7142 bedLeds = adp7142();
+pca9551 bedLeds = pca9551();
 
 bool Stopped=false;
 
@@ -368,6 +368,12 @@ pinMode(OPT_SW_2, INPUT);
 
 void setup()
 {
+  bedLeds.setPeriod0(2.0);
+  bedLeds.setPeriod1(1.0);
+  bedLeds.setDutyCycle0(0.5);
+  bedLeds.setDutyCycle1(0.5);
+  bedLeds.setLedSources(LED_OFF,LED_ON,LED_ON);
+
   setup_killpin();
   setup_powerhold();
   #ifdef STEPPER_RESET_FIX
@@ -703,6 +709,7 @@ void get_command()
         minutes=(t/60)%60;
         hours=t/60/60;
         sprintf_P(time, PSTR("%i hours %i minutes"),hours, minutes);
+        bedLeds.setLedSources(LED_ON, LED_ON, LED_ON);
         SERIAL_ECHO_START;
         SERIAL_ECHOLN(time);
         lcd_setstatus(time);
@@ -1195,8 +1202,6 @@ void process_commands()
       break;
     case 140: // M140 set bed temp
       if (code_seen('S')) setTargetBed(code_value());
-      //bedLeds.setPWM0(128);
-      //bedLeds.setLS0(BLINK0);
       break;
     case 105 : // M105
       if(setTargetedHotend(105)){
@@ -1305,6 +1310,7 @@ void process_commands()
       }
       break;
     case 190: // M190 - Wait for bed heater to reach target.
+      bedLeds.setLedSources(LED_OFF,LED_ON,LED_ON);
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
         LCD_MESSAGEPGM(MSG_BED_HEATING);
         if (code_seen('S')) setTargetBed(code_value());
