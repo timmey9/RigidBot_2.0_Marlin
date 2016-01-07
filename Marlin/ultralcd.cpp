@@ -323,6 +323,7 @@ static void lcd_sdcard_pause()
     enquecommand(strTemp);
 
     card.pauseSDPrint();
+    bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
     lcdDrawUpdate = 2;
     
 }
@@ -342,7 +343,7 @@ static void lcd_sdcard_resume()
 
     // resume the print
     card.startFileprint();
-
+    bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
     lcdDrawUpdate = 2;
 }
 static void lcd_sdcard_stop()
@@ -491,7 +492,7 @@ static void init_dac()
     dac.begin(); // just use voltages?
     delay(1000);
     dac.setGain(0, 0, 0, 0);
-        dac.setVref(0, 0, 0, 0);
+    dac.setVref(0, 0, 0, 0);
     dac.vdd(DAC_MAX);
     
     driverX=0;
@@ -503,7 +504,16 @@ static void init_dac()
     driverY = dac.getVout(1);
     driverZ = dac.getVout(2);
     driverE = dac.getVout(3);
-    
+    if(driverX == 0 && driverY == 0 && driverZ == 0 && driverE == 0){
+        #define DEFAULT_DRIVER_STRENGTH 50
+        driverX = DEFAULT_DRIVER_STRENGTH;
+        driverY = DEFAULT_DRIVER_STRENGTH;
+        driverZ = DEFAULT_DRIVER_STRENGTH;
+        driverE = DEFAULT_DRIVER_STRENGTH;
+        #undef DEFAULT_DRIVER_STRENGTH
+        dac.voutWrite(driverX,driverY,driverZ,driverE);
+    }
+
     if(driverX>0)driverX+=1;
     if(driverY>0)driverY+=1;
     if(driverZ>0)driverZ+=1;

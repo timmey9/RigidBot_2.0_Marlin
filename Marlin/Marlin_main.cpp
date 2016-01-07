@@ -67,7 +67,7 @@
 // G28 - Home all Axis
 // G90 - Use Absolute Coordinates
 // G91 - Use Relative Coordinates
-// G92 - Set current position to cordinates given
+// G92 - Set current position to coordinates given
 
 //RepRap M Codes
 // M0   - Unconditional stop - Wait for user to press a button on the LCD (Only if ULTRA_LCD is enabled)
@@ -166,6 +166,7 @@ int feedmultiply=100; //100->1 200->2
 int saved_feedmultiply;
 int extrudemultiply=100; //100->1 200->2
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
+pca9551 bedLeds = pca9551();
 float add_homeing[3]={0,0,0};
 float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
@@ -229,7 +230,7 @@ unsigned long stoptime=0;
 
 static uint8_t tmp_extruder;
 
-pca9551 bedLeds = pca9551();
+
 
 bool Stopped=false;
 
@@ -368,10 +369,13 @@ pinMode(OPT_SW_2, INPUT);
 
 void setup()
 {
+  // initialize the heated bed led driver
   bedLeds.setPeriod0(2.0);
-  bedLeds.setPeriod1(1.0);
-  bedLeds.setDutyCycle0(0.5);
+  bedLeds.setDutyCycle0(0.75);
+
+  bedLeds.setPeriod1(0.5);
   bedLeds.setDutyCycle1(0.5);
+
   bedLeds.setLedSources(LED_OFF,LED_ON,LED_ON);
 
   setup_killpin();
@@ -1017,6 +1021,7 @@ void process_commands()
       relative_mode = true;
       break;
     case 92: // G92
+      bedLeds.setLedSources(LED_OFF,LED_ON,LED_ON);
       if(!code_seen(axis_codes[E_AXIS]))
         st_synchronize();
       for(int8_t i=0; i < NUM_AXIS; i++) {
@@ -1050,6 +1055,7 @@ void process_commands()
 
       st_synchronize();
       previous_millis_cmd = millis();
+      bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
       if (codenum > 0){
         codenum += millis();  // keep track of when we started waiting
         while(millis()  < codenum && !lcd_clicked()){
@@ -1064,6 +1070,7 @@ void process_commands()
           lcd_update();
         }
       }
+      bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
       LCD_MESSAGEPGM(MSG_RESUMING);
     }
     break;
@@ -1181,8 +1188,8 @@ void process_commands()
             break;
           }
         }
-      #if defined(FAN_PIN) && FAN_PIN > -1
-        if (pin_number == FAN_PIN)
+      #if defined(FAN_PIN0) && FAN_PIN0 > -1
+        if (pin_number == FAN_PIN0)
           fanSpeed = pin_status;
       #endif
         if (pin_number > -1)
@@ -1234,7 +1241,9 @@ void process_commands()
       break;
     case 109:
     {// M109 - Wait for extruder heater to reach target.
+      bedLeds.setLedSources(LED_ON, LED_ON, LED_OFF);
       if(setTargetedHotend(109)){
+        //bedLeds.setLedSources(LED_ON, LED_OFF, LED_OFF);
         break;
       }
       LCD_MESSAGEPGM(MSG_HEATING);
@@ -1242,6 +1251,7 @@ void process_commands()
         autotemp_enabled=false;
       #endif
       if (code_seen('S')) setTargetHotend(code_value(), tmp_extruder);
+      
       #ifdef AUTOTEMP
         if (code_seen('S')) autotemp_min=code_value();
         if (code_seen('B')) autotemp_max=code_value();
@@ -1304,16 +1314,18 @@ void process_commands()
           }
         #endif //TEMP_RESIDENCY_TIME
         }
+        bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
         LCD_MESSAGEPGM(MSG_HEATING_COMPLETE);
         starttime=millis();
         previous_millis_cmd = millis();
       }
       break;
     case 190: // M190 - Wait for bed heater to reach target.
-      bedLeds.setLedSources(LED_OFF,LED_ON,LED_ON);
+        bedLeds.setLedSources(LED_ON, LED_ON, LED_OFF);
     #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
         LCD_MESSAGEPGM(MSG_BED_HEATING);
         if (code_seen('S')) setTargetBed(code_value());
+        
         codenum = millis();
         while(isHeatingBed())
         {
@@ -1333,24 +1345,44 @@ void process_commands()
           manage_inactivity();
           lcd_update();
         }
+        bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
         LCD_MESSAGEPGM(MSG_BED_DONE);
         previous_millis_cmd = millis();
     #endif
         break;
 
-    #if defined(FAN_PIN) && FAN_PIN > -1
+    #if defined(FAN_PIN0) && FAN_PIN0 > -1
       case 106: //M106 Fan On
+      {
+        int fanNumber = -1;
+        int fan_speed = 255;
+        if(code_seen('F')){
+            fanNumber = constrain(code_value(),0,1);
+        }
         if (code_seen('S')){
-           fanSpeed=constrain(code_value(),0,255);
+           fan_speed = constrain(code_value(),0,10000);
         }
-        else {
-          fanSpeed=255;
+        if(fanNumber == 0 || fanNumber == -1){
+            analogWrite(FAN_PIN0, fan_speed);
+            fanSpeed = fan_speed;
         }
+
+        #if defined(FAN_PIN1) && FAN_PIN1 > -1
+        if(fanNumber == 1 || fanNumber == -1){
+            analogWrite(FAN_PIN1, fan_speed);
+        }
+        #endif //FAN_PIN1
+        
         break;
+      }
       case 107: //M107 Fan Off
         fanSpeed = 0;
+        analogWrite(FAN_PIN0, 0);
+        #if defined(FAN_PIN1) && FAN_PIN1 > -1
+        analogWrite(FAN_PIN1, 0);
+        #endif //FAN_PIN1
         break;
-    #endif //FAN_PIN
+    #endif //FAN_PIN0
     #ifdef BARICUDA
       // PWM for HEATER_1_PIN
       #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1

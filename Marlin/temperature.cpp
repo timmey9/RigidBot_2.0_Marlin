@@ -313,15 +313,15 @@ int getHeaterPower(int heater) {
     (defined(EXTRUDER_1_AUTO_FAN_PIN) && EXTRUDER_1_AUTO_FAN_PIN > -1) || \
     (defined(EXTRUDER_2_AUTO_FAN_PIN) && EXTRUDER_2_AUTO_FAN_PIN > -1)
 
-  #if defined(FAN_PIN) && FAN_PIN > -1
-    #if EXTRUDER_0_AUTO_FAN_PIN == FAN_PIN 
-       #error "You cannot set EXTRUDER_0_AUTO_FAN_PIN equal to FAN_PIN"
+  #if defined(FAN_PIN0) && FAN_PIN0 > -1
+    #if EXTRUDER_0_AUTO_FAN_PIN == FAN_PIN0 
+       #error "You cannot set EXTRUDER_0_AUTO_FAN_PIN equal to FAN_PIN0"
     #endif
-    #if EXTRUDER_1_AUTO_FAN_PIN == FAN_PIN 
-       #error "You cannot set EXTRUDER_1_AUTO_FAN_PIN equal to FAN_PIN"
+    #if EXTRUDER_1_AUTO_FAN_PIN == FAN_PIN0 
+       #error "You cannot set EXTRUDER_1_AUTO_FAN_PIN equal to FAN_PIN0"
     #endif
-    #if EXTRUDER_2_AUTO_FAN_PIN == FAN_PIN 
-       #error "You cannot set EXTRUDER_2_AUTO_FAN_PIN equal to FAN_PIN"
+    #if EXTRUDER_2_AUTO_FAN_PIN == FAN_PIN0 
+       #error "You cannot set EXTRUDER_2_AUTO_FAN_PIN equal to FAN_PIN0"
     #endif
   #endif 
 
@@ -687,10 +687,10 @@ void tp_init()
   #if defined(HEATER_BED_PIN) && (HEATER_BED_PIN > -1) 
     SET_OUTPUT(HEATER_BED_PIN);
   #endif  
-  #if defined(FAN_PIN) && (FAN_PIN > -1) 
-    SET_OUTPUT(FAN_PIN);
+  #if defined(FAN_PIN0) && (FAN_PIN0 > -1) 
+    SET_OUTPUT(FAN_PIN0);
     #ifdef FAST_PWM_FAN
-    setPwmFrequency(FAN_PIN, 1); // No prescaling. Pwm frequency = F_CPU/256/8
+    setPwmFrequency(FAN_PIN0, 1); // No prescaling. Pwm frequency = F_CPU/256/8
     #endif
     #ifdef FAN_SOFT_PWM
 	soft_pwm_fan=(unsigned char)fanSpeed;
@@ -1031,7 +1031,7 @@ ISR(TIMER0_COMPB_vect)
     
     #ifdef FAN_SOFT_PWM
     soft_pwm_fan =(unsigned char) fanSpeed;
-    if(soft_pwm_fan > 0) WRITE(FAN_PIN,1);
+    if(soft_pwm_fan > 0) WRITE(FAN_PIN0,1);
     #endif
   }
   
@@ -1054,7 +1054,7 @@ ISR(TIMER0_COMPB_vect)
   if(soft_pwm_b <= pwn_count_b) WRITE(HEATER_BED_PIN,0);
   #endif
   #ifdef FAN_SOFT_PWM
-  if(soft_pwm_fan <= pwm_count) WRITE(FAN_PIN,0);
+  if(soft_pwm_fan <= pwm_count) WRITE(FAN_PIN0,0);
   #endif
   
   pwm_count++;

@@ -472,7 +472,7 @@ void check_axes_activity()
     disable_e1();
     disable_e2(); 
   }
-#if defined(FAN_PIN) && FAN_PIN > -1
+#if defined(FAN_PIN0) && FAN_PIN0 > -1
   #ifndef FAN_SOFT_PWM
     #ifdef FAN_KICKSTART_TIME
       static unsigned long fan_kick_end;
@@ -488,9 +488,9 @@ void check_axes_activity()
         fan_kick_end = 0;
       }
     #endif//FAN_KICKSTART_TIME
-    analogWrite(FAN_PIN,tail_fan_speed);
+    analogWrite(FAN_PIN0,tail_fan_speed);
   #endif//!FAN_SOFT_PWM
-#endif//FAN_PIN > -1
+#endif//FAN_PIN0 > -1
 #ifdef AUTOTEMP
   getHighESpeed();
 #endif

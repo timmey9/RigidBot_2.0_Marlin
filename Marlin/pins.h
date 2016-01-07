@@ -1827,7 +1827,8 @@
 #define SDSS               53
 #define LED_PIN            13
 
-#define FAN_PIN            8 //11 // IO pin. Buffer needed
+#define FAN_PIN0            8
+#define FAN_PIN1           11
 
 #define PS_ON_PIN          -1
 
@@ -2010,7 +2011,7 @@
 #endif
 
 #define SENSITIVE_PINS {0, 1, X_STEP_PIN, X_DIR_PIN, X_ENABLE_PIN, X_MIN_PIN, X_MAX_PIN, Y_STEP_PIN, Y_DIR_PIN, Y_ENABLE_PIN, Y_MIN_PIN, Y_MAX_PIN, Z_STEP_PIN, Z_DIR_PIN, Z_ENABLE_PIN, Z_MIN_PIN, Z_MAX_PIN, PS_ON_PIN, \
-                        HEATER_BED_PIN, FAN_PIN,                  \
+                        HEATER_BED_PIN, FAN_PIN0,                  \
                         _E0_PINS _E1_PINS _E2_PINS             \
                         analogInputToDigitalPin(TEMP_0_PIN), analogInputToDigitalPin(TEMP_1_PIN), analogInputToDigitalPin(TEMP_2_PIN), analogInputToDigitalPin(TEMP_BED_PIN) }
 #endif
