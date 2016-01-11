@@ -2005,11 +2005,15 @@ void process_commands()
     #endif //FILAMENTCHANGEENABLE
     case 907: // M907 Set digital trimpot motor current using axis codes.
     {
-      #if defined(DIGIPOTSS_PIN) && DIGIPOTSS_PIN > -1
-        for(int i=0;i<NUM_AXIS;i++) if(code_seen(axis_codes[i])) digipot_current(i,code_value());
-        if(code_seen('B')) digipot_current(4,code_value());
-        if(code_seen('S')) for(int i=0;i<=4;i++) digipot_current(i,code_value());
-      #endif
+      //#if defined(DIGIPOTSS_PIN) && DIGIPOTSS_PIN > -1
+        for(int i=0; i<NUM_AXIS; i++) {
+          if(code_seen(axis_codes[i]))  dac.voutWrite(i,code_value_long()*50);
+        }
+        //dac.voutWrite(current[0], current[1], current[2], current[3]);
+        
+        //if(code_seen('B')) digipot_current(4,code_value());
+        //if(code_seen('S')) for(int i=0;i<=4;i++) digipot_current(i,code_value());
+      //#endif
     }
     break;
     case 908: // M908 Control digital trimpot directly.
