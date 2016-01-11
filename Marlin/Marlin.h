@@ -18,11 +18,7 @@
 #include <avr/interrupt.h>
 
 #include "pca9551.h"
-#ifdef RIGIDBOARD
-//For DAC support, only used if #define DAC_DRIVER found in Configuration.h
 #include "mcp4728.h"
-
-#endif
 
 #include "fastio.h"
 #include "Configuration.h"
@@ -189,6 +185,7 @@ extern int feedmultiply;
 extern int extrudemultiply; // Sets extrude multiply factor (in percent)
 extern float current_position[NUM_AXIS];
 extern pca9551 bedLeds;
+extern mcp4728 dac;
 extern float add_homeing[3];
 extern float min_pos[3];
 extern float max_pos[3];

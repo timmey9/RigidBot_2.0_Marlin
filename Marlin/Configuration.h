@@ -2,8 +2,9 @@
 #define CONFIGURATION_H
 
 //	Uncomment the following options for your machine
-//#define	RIGIDBOT_BIG
-//#define	RIGIDBOT_DUAL_EXTRUDER
+//#define	RIGIDBOT_BIG // large x/y area
+//#define RIGIDBOT_XL // larger z height
+//#define	RIGIDBOT_DUAL_EXTRUDER // two extruders
 
 #define RIGIDBOARD
 
@@ -298,14 +299,19 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #ifdef RIGIDBOT_BIG
 #define X_MAX_BASE 406
 #define Y_MAX_BASE 304
-#define Z_MAX_BASE 254
-#define X_DUAL_REDUCTION 57
 #else
 #define X_MAX_BASE 254
 #define Y_MAX_BASE 248
-#define Z_MAX_BASE 254
-#define X_DUAL_REDUCTION 57
 #endif
+
+#ifdef RIGIDBOT_XL
+#define Z_MAX_BASE 355
+#else
+#define Z_MAX_BASE 254
+#endif
+
+#define X_DUAL_REDUCTION 57
+
 
 #ifdef RIGIDBOT_DUAL_EXTRUDER
 #define X_MAX_POS (X_MAX_BASE - X_DUAL_REDUCTION)

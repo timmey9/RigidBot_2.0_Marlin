@@ -49,6 +49,7 @@
 #endif
 
 #include "pca9551.h"
+#include "mcp4728.h"
 
 #define VERSION_STRING  "1.0.0"
 
@@ -167,6 +168,7 @@ int saved_feedmultiply;
 int extrudemultiply=100; //100->1 200->2
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
 pca9551 bedLeds = pca9551();
+mcp4728 dac = mcp4728(1);
 float add_homeing[3]={0,0,0};
 float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
@@ -369,6 +371,26 @@ pinMode(OPT_SW_2, INPUT);
 
 void setup()
 {
+  MYSERIAL.begin(BAUDRATE);
+
+  // initialize dac (digital trimpot)
+  #define DAC_MIN 0
+  #define DAC_MAX 5000
+  #define DAC_SCALAR 50
+  int LDACpin = 42; // set physical pin 42 to be held low to enable DAC
+  pinMode(LDACpin, OUTPUT); 
+  digitalWrite(LDACpin, LOW);
+  delay(10);
+  dac.begin();
+  dac.setGain(0, 0, 0, 0);
+  dac.setVref(0, 0, 0, 0);
+  dac.vdd(DAC_MAX);
+
+  if( dac.getVout(0) <50 && dac.getVout(1) < 50 && dac.getVout(2) < 50 && dac.getVout(3) < 50 ){
+      dac.voutWrite(DEFAULT_X_DRIVER_STRENGTH*50, DEFAULT_Y_DRIVER_STRENGTH*50, DEFAULT_Z_DRIVER_STRENGTH*50, DEFAULT_E_DRIVER_STRENGTH*50);
+      dac.eepromWrite();
+  }
+
   // initialize the heated bed led driver
   bedLeds.setPeriod0(2.0);
   bedLeds.setDutyCycle0(0.75);
@@ -384,15 +406,11 @@ void setup()
     pinMode(41, OUTPUT);    // set pin 51, digital pin 41, to output
     digitalWrite(41, LOW);  // drive it down to hold in reset motor driver chips
   #endif
-  MYSERIAL.begin(BAUDRATE);
+  //MYSERIAL.begin(BAUDRATE);
   SERIAL_PROTOCOLLNPGM("start");
   SERIAL_ECHO_START;
 
-  #ifdef DAC_DRIVER
-  int LDACpin = 42; // set physical pin 42 to be held low to enable DAC
-  pinMode(LDACpin, OUTPUT); 
-  digitalWrite(LDACpin, LOW);
-  #endif
+  
 
   // Check startup - does nothing if bootloader sets MCUSR to 0
   byte mcu = MCUSR;

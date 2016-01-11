@@ -1,6 +1,12 @@
 #ifndef CONFIGURATION_ADV_H
 #define CONFIGURATION_ADV_H
 
+
+#define DEFAULT_X_DRIVER_STRENGTH 50
+#define DEFAULT_Y_DRIVER_STRENGTH 50
+#define DEFAULT_Z_DRIVER_STRENGTH 75
+#define DEFAULT_E_DRIVER_STRENGTH 50
+
 //===========================================================================
 //=============================Thermal Settings  ============================
 //===========================================================================
@@ -306,7 +312,7 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 
 
 //The ASCII buffer for recieving from the serial:
-#define MAX_CMD_SIZE 96
+#define MAX_CMD_SIZE 60//96
 #define BUFSIZE 8
 #define BUF_FILL_SIZE 3
 

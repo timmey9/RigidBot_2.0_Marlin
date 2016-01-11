@@ -192,7 +192,7 @@ menuFunc_t callbackFunc;
 float channelVal;
 int16_t firstCall = 0;
 uint16_t driverX, driverY, driverZ, driverE;
-mcp4728 dac = mcp4728(1);
+//mcp4728 dac = mcp4728(1);
 #endif
 
 // placeholders for Ki and Kd edits
@@ -485,15 +485,16 @@ MENU_ITEM_EDIT(int3, MSG_NOZZLE2, &target_temperature[2], 0, HEATER_2_MAXTEMP - 
 //  Motor Driver Gain control routines
 //####################################################################################################
 #ifdef DAC_DRIVER
-
+/*
 static void init_dac()
 {
-//  dac = mcp4728(1);
-    dac.begin(); // just use voltages?
-    delay(1000);
-    dac.setGain(0, 0, 0, 0);
-    dac.setVref(0, 0, 0, 0);
-    dac.vdd(DAC_MAX);
+    MYSERIAL.print("DAC init");
+
+    //dac.begin(); // just use voltages?
+    //delay(10);
+    //dac.setGain(0, 0, 0, 0);
+    //dac.setVref(0, 0, 0, 0);
+    //dac.vdd(DAC_MAX);
     
     driverX=0;
     driverY=0;
@@ -504,26 +505,29 @@ static void init_dac()
     driverY = dac.getVout(1);
     driverZ = dac.getVout(2);
     driverE = dac.getVout(3);
-    if(driverX == 0 && driverY == 0 && driverZ == 0 && driverE == 0){
-        #define DEFAULT_DRIVER_STRENGTH 50
-        driverX = DEFAULT_DRIVER_STRENGTH;
-        driverY = DEFAULT_DRIVER_STRENGTH;
-        driverZ = DEFAULT_DRIVER_STRENGTH;
-        driverE = DEFAULT_DRIVER_STRENGTH;
-        #undef DEFAULT_DRIVER_STRENGTH
-        dac.voutWrite(driverX,driverY,driverZ,driverE);
-    }
+    
+    
 
-    if(driverX>0)driverX+=1;
-    if(driverY>0)driverY+=1;
-    if(driverZ>0)driverZ+=1;
-    if(driverE>0)driverE+=1;
+
+    if(driverX>0){
+        driverX+=1;
+
+    }
+    if(driverY>0){
+        driverY+=1;
+    }
+    if(driverZ>0){
+        driverZ+=1;
+    }
+    if(driverE>0){
+        driverE+=1;
+    }
     
 }
-
+*/
 static void lcd_driver_x()
 {
-    //static float a = 0;
+    driverX = dac.getVout(0);
     if (encoderPosition != 0)
     {
         driverX += (int)encoderPosition * DAC_SCALAR;
@@ -549,7 +553,7 @@ static void lcd_driver_x()
 
 static void lcd_driver_y()
 {
-    //static float a = 0;
+    driverY = dac.getVout(1);
     if (encoderPosition != 0)
     {
         driverY += (int)encoderPosition *DAC_SCALAR;
@@ -575,7 +579,7 @@ static void lcd_driver_y()
 
 static void lcd_driver_z()
 {
-    //static float a = 0;
+    driverZ = dac.getVout(2);
     if (encoderPosition != 0)
     {
         driverZ += (int)encoderPosition * DAC_SCALAR;
@@ -601,7 +605,7 @@ static void lcd_driver_z()
 
 static void lcd_driver_e()
 {
-    //static float a = 0;
+    driverE = dac.getVout(3);
     if (encoderPosition != 0)
     {
         driverE += (int)encoderPosition * DAC_SCALAR;
@@ -634,12 +638,6 @@ static void lcd_dac_menu()
 {
   // create and destroy the DAC object here
     //int a,b,c,d = 0; //These will be used to store the 4 dac channel values for printing and editing
-    static int start = 0;
-    if (start==0)
-    {
-        init_dac();
-        start = 1;
-    }
     START_MENU();
     MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
     //MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
