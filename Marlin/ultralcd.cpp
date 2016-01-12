@@ -364,6 +364,9 @@ static void lcd_sdcard_stop()
     sprintf_P(strTemp, PSTR("M140 S0"));
     enquecommand(strTemp);
 
+    sprintf_P(strTemp, PSTR("M107"));
+    enquecommand(strTemp);
+
     card.pauseSDPrint();
 
     delay(200);
