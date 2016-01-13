@@ -182,6 +182,7 @@ void setPwmFrequency(uint8_t pin, int val);
 extern float homing_feedrate[];
 extern bool axis_relative_modes[];
 extern int feedmultiply;
+extern float feedrate;
 extern int extrudemultiply; // Sets extrude multiply factor (in percent)
 extern float current_position[NUM_AXIS];
 extern pca9551 bedLeds;

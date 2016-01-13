@@ -303,6 +303,7 @@ float   oldX;
 float   oldY;
 float   oldZ;
 float   oldE;
+float   oldFeedrate;
 
 // jkl;
 static void lcd_return_to_status()
@@ -317,9 +318,18 @@ static void lcd_sdcard_pause()
     oldY = current_position[Y_AXIS];
     oldZ = current_position[Z_AXIS];
     oldE = current_position[E_AXIS];
-    
-    // retract extruder (E axis), raise extruder (Z axis), move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("F9000 G0 Y%d X3.0"), Y_MAX_POS);
+    oldFeedrate = feedrate;
+
+    // retract extruder (E axis)
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
+    enquecommand(strTemp);
+
+    //raise extruder (Z axis)
+    sprintf_P(strTemp, PSTR("G0 Z%s F9000"), ftostr74(oldZ+10.0));
+    enquecommand(strTemp);
+
+    // move bed forward (Y axis) and extruder out of the way (X axis)
+    sprintf_P(strTemp, PSTR("F9000 G0 Y%s X3.0"), ftostr74(Y_MAX_POS));
     enquecommand(strTemp);
 
     card.pauseSDPrint();
@@ -338,8 +348,22 @@ static void lcd_sdcard_resume()
     enquecommand(strTemp);
     
     // return X and Y to original position before the pause
-    sprintf_P(strTemp, PSTR("G0 F9000 X%f Y%f"), oldX, oldY);
+    sprintf_P(strTemp, PSTR("G0 F9000 X%s Y%s"), ftostr74(oldX), ftostr74(oldY));
     enquecommand(strTemp);
+    
+    // return Z to original position before the pause
+    sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ));
+    enquecommand(strTemp);
+
+    // un-retract extruder (E axis)
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE));
+    enquecommand(strTemp);
+
+    MYSERIAL.print("old feedrate:");
+    MYSERIAL.println(oldFeedrate);
+
+    MYSERIAL.print("  strTemp: ");
+    MYSERIAL.println(strTemp);   
 
     // resume the print
     card.startFileprint();
@@ -354,17 +378,25 @@ static void lcd_sdcard_stop()
     oldZ = current_position[Z_AXIS];
     oldE = current_position[E_AXIS];
     
-    // retract extruder (E axis), raise extruder (Z axis), move bed forward (Y axis), move extruder out of way (X axis)
+    // retract extruder (E axis)
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
+    enquecommand(strTemp);
+
+    //raise extruder (Z axis)
+    sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ+10.0));
+    enquecommand(strTemp);
+
+    // move bed forward (Y axis), move extruder out of way (X axis)
     sprintf_P(strTemp, PSTR("G0 F9000 Y%d X3.0"), Y_MAX_POS);
     enquecommand(strTemp);
     
-    sprintf_P(strTemp, PSTR("M104 S0"));
+    sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
     enquecommand(strTemp);
 
-    sprintf_P(strTemp, PSTR("M140 S0"));
+    sprintf_P(strTemp, PSTR("M140 S0")); // turn off bed
     enquecommand(strTemp);
 
-    sprintf_P(strTemp, PSTR("M107"));
+    sprintf_P(strTemp, PSTR("M107")); // turn off part fans
     enquecommand(strTemp);
 
     card.pauseSDPrint();
@@ -2174,6 +2206,24 @@ char *ftostr52(const float &x)
   conv[5]=(xx/10)%10+'0';
   conv[6]=(xx)%10+'0';
   conv[7]=0;
+  return conv;
+}
+
+//  convert float to string with +123.4567 format
+char *ftostr74(const float &x)
+{
+  long xx=x*10000;
+  conv[0]=(xx>=0)?'+':'-';
+  xx=abs(xx);
+  conv[1]=(xx/1000000)%10+'0';
+  conv[2]=(xx/100000)%10+'0';
+  conv[3]=(xx/10000)%10+'0';
+  conv[4]='.';
+  conv[5]=(xx/1000)%10+'0';
+  conv[6]=(xx/100)%10+'0';
+  conv[7]=(xx/10)%10+'0';
+  conv[8]=(xx)%10+'0';
+  conv[9]=0;
   return conv;
 }
 

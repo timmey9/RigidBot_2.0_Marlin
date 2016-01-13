@@ -81,8 +81,8 @@ void Config_StoreSettings()
   EEPROM_WRITE_VAR(i,absPreheatHPBTemp);
   EEPROM_WRITE_VAR(i,absPreheatFanSpeed);
 
-  EEPROM_WRITE_VAR(i,fileLineNumber);                                   //this line added, but doesn't do anything currently
-  for(int k = 0; k < FILE_SIZE; k++) EEPROM_WRITE_VAR(i,fileName[k]);   // this line added, but doesn't do anything currently
+  //EEPROM_WRITE_VAR(i,fileLineNumber);                                   //this line added, but doesn't do anything currently
+  //for(int k = 0; k < FILE_SIZE; k++) EEPROM_WRITE_VAR(i,fileName[k]);   // this line added, but doesn't do anything currently
 
   #ifdef PIDTEMP
     EEPROM_WRITE_VAR(i,Kp);

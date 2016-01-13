@@ -164,6 +164,7 @@ CardReader card;
 float homing_feedrate[] = HOMING_FEEDRATE;
 bool axis_relative_modes[] = AXIS_RELATIVE_MODES;
 int feedmultiply=100; //100->1 200->2
+float feedrate = 1500.0;
 int saved_feedmultiply;
 int extrudemultiply=100; //100->1 200->2
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
@@ -202,8 +203,8 @@ int EtoPPressure=0;
 const char axis_codes[NUM_AXIS] = {'X', 'Y', 'Z', 'E'};
 static float destination[NUM_AXIS] = {  0.0, 0.0, 0.0, 0.0};
 static float offset[3] = {0.0, 0.0, 0.0};
-static bool home_all_axis = true;
-static float feedrate = 1500.0, next_feedrate, saved_feedrate;
+static bool home_all_axis = true; 
+static float next_feedrate, saved_feedrate;
 static long gcode_N, gcode_LastN, Stopped_gcode_LastN = 0;
 
 static bool relative_mode = false;  //Determines Absolute or Relative Coordinates
@@ -471,13 +472,15 @@ void setup()
 
 void loop()
 {
-  if(buflen < (BUF_FILL_SIZE-1))
+  if(buflen < BUF_FILL_SIZE)
     get_command();
   #ifdef SDSUPPORT
   card.checkautostart(false);
   #endif
   if(buflen)
   {
+    MYSERIAL.print("buflen: ");
+    MYSERIAL.println(buflen);
     #ifdef SDSUPPORT
       if(card.saving)
       {
@@ -501,6 +504,7 @@ void loop()
       }
       else
       {
+        MYSERIAL.println("c");
         process_commands();
       }
     #else
@@ -508,6 +512,7 @@ void loop()
     #endif //SDSUPPORT
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
+    
   }
   //check heater every n milliseconds
   manage_heater();
@@ -713,10 +718,11 @@ void get_command()
     }
   }
   #ifdef SDSUPPORT
+  //if(serial_count!=0){
   if(!card.sdprinting || serial_count!=0){
     return;
   }
-  while( !card.eof()  && buflen < BUFSIZE) {
+  while( !card.eof()  && buflen < BUF_FILL_SIZE) {
     fileLineNumber++;
     int16_t n=card.get();
     serial_char = (char)n;

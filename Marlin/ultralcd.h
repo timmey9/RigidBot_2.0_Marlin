@@ -93,5 +93,6 @@ char *ftostr32(const float &x);
 char *ftostr5(const float &x);
 char *ftostr51(const float &x);
 char *ftostr52(const float &x);
+char *ftostr74(const float &x);
 
 #endif //ULTRALCD
