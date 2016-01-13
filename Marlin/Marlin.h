@@ -195,6 +195,10 @@ extern int ValvePressure;
 extern int EtoPPressure;
 #endif
 
+extern int16_t fileLineNumber;
+#define FILE_SIZE 40
+extern char fileName[FILE_SIZE];
+
 #ifdef FWRETRACT
 extern bool autoretract_enabled;
 extern bool retracted;

@@ -169,6 +169,8 @@ int extrudemultiply=100; //100->1 200->2
 float current_position[NUM_AXIS] = { 0.0, 0.0, 0.0, 0.0 };
 pca9551 bedLeds = pca9551();
 mcp4728 dac = mcp4728(1);
+int16_t fileLineNumber;
+char fileName[FILE_SIZE];
 float add_homeing[3]={0,0,0};
 float min_pos[3] = { X_MIN_POS, Y_MIN_POS, Z_MIN_POS };
 float max_pos[3] = { X_MAX_POS, Y_MAX_POS, Z_MAX_POS };
@@ -390,7 +392,7 @@ void setup()
       dac.voutWrite(DEFAULT_X_DRIVER_STRENGTH*50, DEFAULT_Y_DRIVER_STRENGTH*50, DEFAULT_Z_DRIVER_STRENGTH*50, DEFAULT_E_DRIVER_STRENGTH*50);
       dac.eepromWrite();
   }
-
+  
   // initialize the heated bed led driver
   bedLeds.setPeriod0(2.0);
   bedLeds.setDutyCycle0(0.75);
@@ -715,6 +717,7 @@ void get_command()
     return;
   }
   while( !card.eof()  && buflen < BUFSIZE) {
+    fileLineNumber++;
     int16_t n=card.get();
     serial_char = (char)n;
     if(serial_char == '\n' ||
@@ -737,7 +740,7 @@ void get_command()
         lcd_setstatus(time);
         card.printingHasFinished();
         card.checkautostart(true);
-
+        fileLineNumber = -1;
       }
       if(!serial_count)
       {
@@ -2010,7 +2013,7 @@ void process_commands()
           if(code_seen(axis_codes[i]))  dac.voutWrite(i,code_value_long()*50);
         }
         //dac.voutWrite(current[0], current[1], current[2], current[3]);
-        
+        if(code_seen('S')) dac.eepromWrite(); // save to eeprom
         //if(code_seen('B')) digipot_current(4,code_value());
         //if(code_seen('S')) for(int i=0;i<=4;i++) digipot_current(i,code_value());
       //#endif

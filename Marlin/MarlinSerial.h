@@ -43,18 +43,18 @@
 
 // Registers used by MarlinSerial class (these are expanded 
 // depending on selected serial port
-#define M_UCSRxA SERIAL_REGNAME(UCSR,SERIAL_PORT,A) // defines M_UCSRxA to be UCSRnA where n is the serial port number
-#define M_UCSRxB SERIAL_REGNAME(UCSR,SERIAL_PORT,B) 
-#define M_RXENx SERIAL_REGNAME(RXEN,SERIAL_PORT,)    
-#define M_TXENx SERIAL_REGNAME(TXEN,SERIAL_PORT,)    
-#define M_RXCIEx SERIAL_REGNAME(RXCIE,SERIAL_PORT,)    
-#define M_UDREx SERIAL_REGNAME(UDRE,SERIAL_PORT,)    
-#define M_UDRx SERIAL_REGNAME(UDR,SERIAL_PORT,)  
-#define M_UBRRxH SERIAL_REGNAME(UBRR,SERIAL_PORT,H)
-#define M_UBRRxL SERIAL_REGNAME(UBRR,SERIAL_PORT,L)
-#define M_RXCx SERIAL_REGNAME(RXC,SERIAL_PORT,)
-#define M_USARTx_RX_vect SERIAL_REGNAME(USART,SERIAL_PORT,_RX_vect)
-#define M_U2Xx SERIAL_REGNAME(U2X,SERIAL_PORT,)
+#define M_UCSRxA          SERIAL_REGNAME(UCSR,SERIAL_PORT,A) // defines M_UCSRxA to be UCSRnA where n is the serial port number
+#define M_UCSRxB          SERIAL_REGNAME(UCSR,SERIAL_PORT,B) 
+#define M_RXENx           SERIAL_REGNAME(RXEN,SERIAL_PORT,)    
+#define M_TXENx           SERIAL_REGNAME(TXEN,SERIAL_PORT,)    
+#define M_RXCIEx          SERIAL_REGNAME(RXCIE,SERIAL_PORT,)    
+#define M_UDREx           SERIAL_REGNAME(UDRE,SERIAL_PORT,)    
+#define M_UDRx            SERIAL_REGNAME(UDR,SERIAL_PORT,)  
+#define M_UBRRxH          SERIAL_REGNAME(UBRR,SERIAL_PORT,H)
+#define M_UBRRxL          SERIAL_REGNAME(UBRR,SERIAL_PORT,L)
+#define M_RXCx            SERIAL_REGNAME(RXC,SERIAL_PORT,)
+#define M_USARTx_RX_vect  SERIAL_REGNAME(USART,SERIAL_PORT,_RX_vect)
+#define M_U2Xx            SERIAL_REGNAME(U2X,SERIAL_PORT,)
 
 
 

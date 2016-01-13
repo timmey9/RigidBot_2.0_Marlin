@@ -411,7 +411,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define ABS_PREHEAT_HPB_TEMP		    70
 #define ABS_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
-#define LCD_HAS_SLOW_BUTTONS // increases the debounce time so you don't get double clicks when the user actually clicked once. 
+//#define LCD_HAS_SLOW_BUTTONS // increases the debounce time so you don't get double clicks when the user actually clicked once. 
 //LCD and SD support
 //#define ULTRA_LCD  //general lcd support, also 16x2
 //#define DOGLCD  // Support for SPI LCD 128x64 (Controller ST7565R graphic Display Family)
