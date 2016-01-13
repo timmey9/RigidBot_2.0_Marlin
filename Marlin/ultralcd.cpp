@@ -312,13 +312,24 @@ static void lcd_return_to_status()
     currentMenu = lcd_status_screen;
 }
 
-static void lcd_sdcard_pause()
+static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     oldX = current_position[X_AXIS];
     oldY = current_position[Y_AXIS];
     oldZ = current_position[Z_AXIS];
     oldE = current_position[E_AXIS];
     oldFeedrate = feedrate;
+
+    MYSERIAL.print("oldX: ");
+    MYSERIAL.println(oldX);
+    MYSERIAL.print("oldY: ");
+    MYSERIAL.println(oldY);
+    MYSERIAL.print("oldZ: ");
+    MYSERIAL.println(oldZ);
+    MYSERIAL.print("oldE: ");
+    MYSERIAL.println(oldE);
+    MYSERIAL.print("oldFeedrate1: ");
+    MYSERIAL.println(oldFeedrate);
 
     // retract extruder (E axis)
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
@@ -329,7 +340,7 @@ static void lcd_sdcard_pause()
     enquecommand(strTemp);
 
     // move bed forward (Y axis) and extruder out of the way (X axis)
-    sprintf_P(strTemp, PSTR("F9000 G0 Y%s X3.0"), ftostr74(Y_MAX_POS));
+    sprintf_P(strTemp, PSTR("F9000 G0 Y%s X3.0"), ftostr74(Y_MAX_POS)); // G162
     enquecommand(strTemp);
 
     card.pauseSDPrint();
@@ -337,10 +348,10 @@ static void lcd_sdcard_pause()
     lcdDrawUpdate = 2;
     
 }
-static void lcd_sdcard_resume()
+static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     // move X and Y axis to zero quickly
-    sprintf_P(strTemp, PSTR("G0 F9000 Y0.0 X0.0"));
+    sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
     enquecommand(strTemp);
     
     // home Y, then X, just to make sure nothing was messed up
@@ -359,18 +370,18 @@ static void lcd_sdcard_resume()
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE));
     enquecommand(strTemp);
 
-    MYSERIAL.print("old feedrate:");
-    MYSERIAL.println(oldFeedrate);
+    sprintf_P(strTemp, PSTR("G0 F%s"), ftostr5(oldFeedrate));
+    enquecommand(strTemp);   
 
-    MYSERIAL.print("  strTemp: ");
-    MYSERIAL.println(strTemp);   
+    MYSERIAL.print("oldFeedrate2: ");
+    MYSERIAL.println(oldFeedrate);
 
     // resume the print
     card.startFileprint();
     bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
     lcdDrawUpdate = 2;
 }
-static void lcd_sdcard_stop()
+static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     
     oldX = current_position[X_AXIS];

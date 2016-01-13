@@ -578,7 +578,7 @@ void get_command()
     {
       
       // detect layer changes
-      if(curr_z_height != current_position[Z_AXIS]){
+      if(curr_z_height != current_position[Z_AXIS] && buflen < (BUFSIZE-3)){
         MYSERIAL.println("Z change");
         
         curr_z_height = current_position[Z_AXIS];
@@ -603,7 +603,7 @@ void get_command()
           enquecommand(strTemp);
           
           // return X and Y to original position before the pause
-          sprintf_P(strTemp, PSTR("G0 F9000 X%f Y%f"), oldX, oldY);
+          sprintf_P(strTemp, PSTR("G0 F9000 X%s Y%s"), ftostr74(oldX), ftostr74(oldY));
           enquecommand(strTemp);
         }
       }
@@ -612,7 +612,7 @@ void get_command()
       if(disable_hbp_at_height && current_position[Z_AXIS] > height_var){ // if "disable heated bed at height" is enabled, and the height is greater than the set height, then insert command to turn off heated bed
         MYSERIAL.println("HBP turned off");
         char strTemp[20];
-        sprintf_P(strTemp, PSTR("M140 S%d"), new_bed_temp); // change bed temp
+        sprintf_P(strTemp, PSTR("M140 S%s"), ftostr74(new_bed_temp)); // change bed temp
         enquecommand(strTemp);
       }
 
