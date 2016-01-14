@@ -319,8 +319,8 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     oldZ = current_position[Z_AXIS];
     oldE = current_position[E_AXIS];
     oldFeedrate = feedrate;
-
-    MYSERIAL.print("oldX: ");
+/*
+    MYSERIAL.print("oldX: "); // jkl;
     MYSERIAL.println(oldX);
     MYSERIAL.print("oldY: ");
     MYSERIAL.println(oldY);
@@ -330,7 +330,7 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     MYSERIAL.println(oldE);
     MYSERIAL.print("oldFeedrate1: ");
     MYSERIAL.println(oldFeedrate);
-
+*/
     // retract extruder (E axis)
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
     enquecommand(strTemp);
@@ -373,8 +373,8 @@ static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-B
     sprintf_P(strTemp, PSTR("G0 F%s"), ftostr5(oldFeedrate));
     enquecommand(strTemp);   
 
-    MYSERIAL.print("oldFeedrate2: ");
-    MYSERIAL.println(oldFeedrate);
+    //MYSERIAL.print("oldFeedrate2: ");
+    //MYSERIAL.println(oldFeedrate); // jkl;
 
     // resume the print
     card.startFileprint();
@@ -1463,9 +1463,9 @@ Add misc settings menu
 */
 
  bool display_layer_num = false;
- bool autohome_between_layers = true;
+ bool autohome_between_layers = false;
  float every_other_layer = 0.8;
- bool disable_hbp_at_height = true;
+ bool disable_hbp_at_height = false;
  float height_var = 2.0;
  int new_bed_temp = 0;
  bool detect_end_of_print = false;

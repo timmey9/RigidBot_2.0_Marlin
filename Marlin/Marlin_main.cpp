@@ -479,8 +479,6 @@ void loop()
   #endif
   if(buflen)
   {
-    MYSERIAL.print("buflen: ");
-    MYSERIAL.println(buflen);
     #ifdef SDSUPPORT
       if(card.saving)
       {
@@ -504,12 +502,15 @@ void loop()
       }
       else
       {
-        MYSERIAL.println("c");
         process_commands();
       }
     #else
       process_commands();
     #endif //SDSUPPORT
+    MYSERIAL.print("echo: buflen: "); // jkl;
+    MYSERIAL.print(buflen);
+    MYSERIAL.print("  Command just run: ");
+    MYSERIAL.println(cmdbuffer[bufindr]);
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
     
@@ -579,7 +580,7 @@ void get_command()
       
       // detect layer changes
       if(curr_z_height != current_position[Z_AXIS] && buflen < (BUFSIZE-3)){
-        MYSERIAL.println("Z change");
+        //MYSERIAL.println("Z change"); //jkl;
         
         curr_z_height = current_position[Z_AXIS];
       
@@ -588,7 +589,7 @@ void get_command()
 
         // home X and Y axis between layers
         if(autohome_between_layers && curr_mod_height < prev_mod_height ){
-          MYSERIAL.println("Home at layer change");
+          // MYSERIAL.println("Home at layer change"); // jkl;
           float oldX = current_position[X_AXIS];
           float oldY = current_position[Y_AXIS];
           float oldZ = current_position[Z_AXIS];
@@ -610,7 +611,7 @@ void get_command()
 
       // disable hbp at height
       if(disable_hbp_at_height && current_position[Z_AXIS] > height_var){ // if "disable heated bed at height" is enabled, and the height is greater than the set height, then insert command to turn off heated bed
-        MYSERIAL.println("HBP turned off");
+        //MYSERIAL.println("HBP turned off"); //jkl;
         char strTemp[20];
         sprintf_P(strTemp, PSTR("M140 S%s"), ftostr74(new_bed_temp)); // change bed temp
         enquecommand(strTemp);
@@ -718,7 +719,6 @@ void get_command()
     }
   }
   #ifdef SDSUPPORT
-  //if(serial_count!=0){
   if(!card.sdprinting || serial_count!=0){
     return;
   }
@@ -1075,6 +1075,8 @@ void process_commands()
     case 0: // M0 - Unconditional stop - Wait for user button press on LCD
     case 1: // M1 - Conditional stop - Wait for user button press on LCD
     {
+      MYSERIAL.print("Command: ");
+      MYSERIAL.println(cmdbuffer[bufindr]); //jkl;
       LCD_MESSAGEPGM(MSG_USERWAIT);
       codenum = 0;
       if(code_seen('P')) codenum = code_value(); // milliseconds to wait
