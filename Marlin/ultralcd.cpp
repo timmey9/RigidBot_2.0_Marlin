@@ -59,7 +59,7 @@ static void lcd_move_menu();
 static void lcd_jog_menu();
 static void lcd_filament_menu();
 static void lcd_control_menu();
-static void lcd_misc_settings_menu();
+//static void lcd_misc_settings_menu();
 static void lcd_control_temperature_menu();
 static void lcd_control_temperature_preheat_pla_settings_menu();
 static void lcd_control_temperature_preheat_abs_settings_menu();
@@ -202,6 +202,15 @@ float raw_Ki, raw_Kd;
 bool        lcdShowAbout;
 uint32_t    lcdAboutTimeoutMillis;
 
+/*
+static void softwareReset(){
+    // http://forum.arduino.cc/index.php/topic,42205.0.html
+    WDTCR=0x18;
+    WDTCR=0x08;
+    asm("wdr");
+    while(1);
+}*/
+
 static void lcd_show_about( uint32_t timeout )
 {
     lcd_return_to_status();
@@ -305,7 +314,6 @@ float   oldZ;
 float   oldE;
 float   oldFeedrate;
 
-// jkl;
 static void lcd_return_to_status()
 {
     encoderPosition = 0;
@@ -319,18 +327,7 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     oldZ = current_position[Z_AXIS];
     oldE = current_position[E_AXIS];
     oldFeedrate = feedrate;
-/*
-    MYSERIAL.print("oldX: "); // jkl;
-    MYSERIAL.println(oldX);
-    MYSERIAL.print("oldY: ");
-    MYSERIAL.println(oldY);
-    MYSERIAL.print("oldZ: ");
-    MYSERIAL.println(oldZ);
-    MYSERIAL.print("oldE: ");
-    MYSERIAL.println(oldE);
-    MYSERIAL.print("oldFeedrate1: ");
-    MYSERIAL.println(oldFeedrate);
-*/
+
     // retract extruder (E axis)
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
     enquecommand(strTemp);
@@ -340,7 +337,9 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     enquecommand(strTemp);
 
     // move bed forward (Y axis) and extruder out of the way (X axis)
-    sprintf_P(strTemp, PSTR("F9000 G0 Y%s X3.0"), ftostr74(Y_MAX_POS)); // G162
+    sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
+    enquecommand(strTemp);
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS)); // G162
     enquecommand(strTemp);
 
     card.pauseSDPrint();
@@ -351,17 +350,20 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
 static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     // move X and Y axis to zero quickly
-    sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
-    enquecommand(strTemp);
+    //sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
+    //enquecommand(strTemp);
     
     // home Y, then X, just to make sure nothing was messed up
-    sprintf_P(strTemp, PSTR("G28 Y X"));
+    sprintf_P(strTemp, PSTR("G28 Y0 X0"));
     enquecommand(strTemp);
     
     // return X and Y to original position before the pause
-    sprintf_P(strTemp, PSTR("G0 F9000 X%s Y%s"), ftostr74(oldX), ftostr74(oldY));
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%s"), ftostr52(oldY));
+    enquecommand(strTemp);
+    sprintf_P(strTemp, PSTR("G0 F9000 X%s"), ftostr52(oldX));
     enquecommand(strTemp);
     
+
     // return Z to original position before the pause
     sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ));
     enquecommand(strTemp);
@@ -370,11 +372,8 @@ static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-B
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE));
     enquecommand(strTemp);
 
-    sprintf_P(strTemp, PSTR("G0 F%s"), ftostr5(oldFeedrate));
+    sprintf_P(strTemp, PSTR("G0 F%s"), ftostr6(oldFeedrate));
     enquecommand(strTemp);   
-
-    //MYSERIAL.print("oldFeedrate2: ");
-    //MYSERIAL.println(oldFeedrate); // jkl;
 
     // resume the print
     card.startFileprint();
@@ -398,7 +397,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     enquecommand(strTemp);
 
     // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F9000 Y%d X3.0"), Y_MAX_POS);
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), Y_MAX_POS);
     enquecommand(strTemp);
     
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
@@ -1443,7 +1442,6 @@ static void lcd_control_menu()
     MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
     MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
-    MENU_ITEM(submenu, MSG_MISC_SETTINGS, lcd_misc_settings_menu);
 #ifdef FWRETRACT
     MENU_ITEM(submenu, MSG_RETRACT, lcd_control_retract_menu);
 #endif
@@ -1462,6 +1460,7 @@ Add misc settings menu
 -make timing more accurate
 */
 
+/*
  bool display_layer_num = false;
  bool autohome_between_layers = false;
  float every_other_layer = 0.8;
@@ -1469,11 +1468,12 @@ Add misc settings menu
  float height_var = 2.0;
  int new_bed_temp = 0;
  bool detect_end_of_print = false;
-
+*/
 static void lcd_do_nothing(){
     return;
 }
 
+/*
 static void lcd_display_layer_num(){
     START_MENU();
     MENU_ITEM_BACK(back, MSG_CONTROL, lcd_misc_settings_menu);
@@ -1528,7 +1528,7 @@ static void lcd_misc_settings_menu(){
     END_MENU();
 
 }
-
+*/
 static void lcd_control_temperature_menu()
 {
     // set up temp variables - undo the default scaling
@@ -2031,7 +2031,7 @@ bool lcd_clicked()
 /** Float conversion utilities **/
 /********************************/
 //  convert float to string with +123.4 format
-char conv[8];
+char conv[10];
 char *ftostr3(const float &x)
 {
   return itostr3((int)x);
@@ -2207,6 +2207,7 @@ char *ftostr51(const float &x)
 //  convert float to string with +123.45 format
 char *ftostr52(const float &x)
 {
+  for(int i = 0; i < 10; i++) conv[i] = 0;
   long xx=x*100;
   conv[0]=(xx>=0)?'+':'-';
   xx=abs(xx);
@@ -2235,6 +2236,31 @@ char *ftostr74(const float &x)
   conv[7]=(xx/10)%10+'0';
   conv[8]=(xx)%10+'0';
   conv[9]=0;
+  return conv;
+}
+
+//  convert float to string with +12345 format
+char *ftostr6(const float &x)
+{
+  long xx=abs(x);
+  if (xx >= 10000)
+    conv[0]=(xx/10000)%10+'0';
+  else
+    conv[0]=(xx>=0)?'+':'-';
+  if (xx >= 1000)
+    conv[1]=(xx/1000)%10+'0';
+  else
+    conv[1]=' ';
+  if (xx >= 100)
+    conv[2]=(xx/100)%10+'0';
+  else
+    conv[2]=' ';
+  if (xx >= 10)
+    conv[3]=(xx/10)%10+'0';
+  else
+    conv[3]=' ';
+  conv[4]=(xx)%10+'0';
+  conv[5]=0;
   return conv;
 }
 

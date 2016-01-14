@@ -507,10 +507,11 @@ void loop()
     #else
       process_commands();
     #endif //SDSUPPORT
-    MYSERIAL.print("echo: buflen: "); // jkl;
-    MYSERIAL.print(buflen);
-    MYSERIAL.print("  Command just run: ");
-    MYSERIAL.println(cmdbuffer[bufindr]);
+    //MYSERIAL.print("echo: buflen: "); // jkl;
+    //MYSERIAL.print(buflen);
+    //MYSERIAL.print("  Command just run: ");
+    //MYSERIAL.println(cmdbuffer[bufindr]);
+    for(int i = 0; i < MAX_CMD_SIZE; i++) cmdbuffer[bufindr][i] = 0; //jkl;
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
     
@@ -522,47 +523,6 @@ void loop()
   lcd_update();
 }
 
-/*
-void optional_layerchange_settings(int layerNumber){
-  char strTemp[20];
-  
-  if(display_layer_num){ // if "display layer numbe" is enabled, then insert M117 command to display the layer number
-    sprintf_P(strTemp, PSTR("M117 Layer: %d"), layerNumber);
-    enquecommand(strTemp);
-  }
-  
-  if(autohome_between_layers && (layerNumber%(every_other_layer+1))==0 ){
-    float oldX = current_position[X_AXIS];
-    float oldY = current_position[Y_AXIS];
-    float oldZ = current_position[Z_AXIS];
-    float oldE = current_position[E_AXIS];
-    // move X and Y axis to zero quickly
-    sprintf_P(strTemp, PSTR("G0 F9000 Y0.0 X0.0"));
-    enquecommand(strTemp);
-    
-    // home Y, then X, just to make sure nothing was messed up
-    sprintf_P(strTemp, PSTR("G28 Y X"));
-    enquecommand(strTemp);
-    
-    // return X and Y to original position before the pause
-    sprintf_P(strTemp, PSTR("G0 F9000 X%f Y%f"), oldX, oldY);
-    enquecommand(strTemp);
-  }
-  // have the temperature
-  if(layerNumber == height_var && disable_hbp_at_height){ // if "disable heated bed at height" is enabled, and the layer number = desired disable layer, then insert command to turn off heated bed
-    sprintf_P(strTemp, PSTR("M140 S%d"), new_bed_temp); // turn bed off
-    enquecommand(strTemp);
-  }
-}*/
-
-void end_of_print_script(){
-  if(!detect_end_of_print) return;
-  char strTemp[20];
-
-  // move bed to front
-  sprintf_P(strTemp, PSTR("G0 F9000 Y%d X0.0"), Y_MAX_POS);
-  enquecommand(strTemp);
-}
 
 #include <math.h>
 static float curr_z_height = 0;
@@ -577,7 +537,7 @@ void get_command()
        (serial_char == ':' && comment_mode == false) ||
        serial_count >= (MAX_CMD_SIZE - 1) )
     {
-      
+      /*
       // detect layer changes
       if(curr_z_height != current_position[Z_AXIS] && buflen < (BUFSIZE-3)){
         //MYSERIAL.println("Z change"); //jkl;
@@ -607,15 +567,16 @@ void get_command()
           sprintf_P(strTemp, PSTR("G0 F9000 X%s Y%s"), ftostr74(oldX), ftostr74(oldY));
           enquecommand(strTemp);
         }
-      }
+      }*/
 
+      /*
       // disable hbp at height
       if(disable_hbp_at_height && current_position[Z_AXIS] > height_var){ // if "disable heated bed at height" is enabled, and the height is greater than the set height, then insert command to turn off heated bed
         //MYSERIAL.println("HBP turned off"); //jkl;
         char strTemp[20];
         sprintf_P(strTemp, PSTR("M140 S%s"), ftostr74(new_bed_temp)); // change bed temp
         enquecommand(strTemp);
-      }
+      }*/
 
       if(!serial_count) { //if empty line
         comment_mode = false; //for new command
@@ -1075,7 +1036,7 @@ void process_commands()
     case 0: // M0 - Unconditional stop - Wait for user button press on LCD
     case 1: // M1 - Conditional stop - Wait for user button press on LCD
     {
-      MYSERIAL.print("Command: ");
+      MYSERIAL.print("echo:Command: ");
       MYSERIAL.println(cmdbuffer[bufindr]); //jkl;
       LCD_MESSAGEPGM(MSG_USERWAIT);
       codenum = 0;
