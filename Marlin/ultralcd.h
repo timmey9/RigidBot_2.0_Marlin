@@ -11,6 +11,9 @@
   void lcd_setstatuspgm(const char* message);
   void lcd_setalertstatuspgm(const char* message);
   void lcd_reset_alert_level();
+
+  void lcd_sdcard_pause();
+  void lcd_sdcard_resume();
   
   static unsigned char blink = 0;	// Variable for visualization of fan rotation in GLCD
 
@@ -54,15 +57,6 @@
   extern int absPreheatHotendTemp;
   extern int absPreheatHPBTemp;
   extern int absPreheatFanSpeed;
-    
-  // misc settings
-  extern bool display_layer_num;
-  extern bool autohome_between_layers;
-  extern float every_other_layer;
-  extern bool disable_hbp_at_height;
-  extern float height_var;
-  extern int new_bed_temp;
-  extern bool detect_end_of_print;
   
   
   void lcd_buzz(long duration,uint16_t freq);

@@ -467,6 +467,7 @@ void setup()
       pinMode(41, INPUT);     // set to input, which allows it to be pulled high by pullups
                               // the system power up should be done by now
   #endif
+  enquecommand_P("G28 X Y");
 }
 
 
@@ -1038,30 +1039,36 @@ void process_commands()
     {
       MYSERIAL.print("echo:Command: ");
       MYSERIAL.println(cmdbuffer[bufindr]); //jkl;
-      LCD_MESSAGEPGM(MSG_USERWAIT);
-      codenum = 0;
-      if(code_seen('P')) codenum = code_value(); // milliseconds to wait
-      if(code_seen('S')) codenum = code_value() * 1000; // seconds to wait
-
-      st_synchronize();
-      previous_millis_cmd = millis();
-      bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
-      if (codenum > 0){
-        codenum += millis();  // keep track of when we started waiting
-        while(millis()  < codenum && !lcd_clicked()){
-          manage_heater();
-          manage_inactivity();
-          lcd_update();
-        }
-      }else{
-        while(!lcd_clicked()){
-          manage_heater();
-          manage_inactivity();
-          lcd_update();
-        }
+      if(!code_seen('R')){
+        lcd_sdcard_pause();
+        enquecommand_P("M0 R");
+        LCD_MESSAGEPGM(MSG_USERWAIT);
       }
-      bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
-      LCD_MESSAGEPGM(MSG_RESUMING);
+      else{
+        LCD_MESSAGEPGM(MSG_USERWAIT);
+        codenum = 0;
+        if(code_seen('P')) codenum = code_value(); // milliseconds to wait
+        if(code_seen('S')) codenum = code_value() * 1000; // seconds to wait
+
+        st_synchronize();
+        previous_millis_cmd = millis();
+        if (codenum > 0){
+          codenum += millis();  // keep track of when we started waiting
+          while(millis()  < codenum && !lcd_clicked()){
+            manage_heater();
+            manage_inactivity();
+            lcd_update();
+          }
+        }else{
+          while(!lcd_clicked()){
+            manage_heater();
+            manage_inactivity();
+            lcd_update();
+          }
+        }
+        lcd_sdcard_resume();
+        LCD_MESSAGEPGM(MSG_RESUMING);
+      }
     }
     break;
 #endif

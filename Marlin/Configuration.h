@@ -301,7 +301,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define Y_MAX_BASE 304
 #else
 #define X_MAX_BASE 254
-#define Y_MAX_BASE 248
+#define Y_MAX_BASE 254
 #endif
 
 #ifdef RIGIDBOT_XL

@@ -308,11 +308,12 @@ static void lcd_draw_return_message(uint8_t row)
 //####################################################################################################
 //  Main status display screen
 //####################################################################################################
-float   oldX;
-float   oldY;
-float   oldZ;
-float   oldE;
-float   oldFeedrate;
+static float   oldX;
+static float   oldY;
+static float   oldZ;
+static float   oldE;
+static float   oldFeedrate;
+static bool    using_sd_card = false;
 
 static void lcd_return_to_status()
 {
@@ -320,7 +321,7 @@ static void lcd_return_to_status()
     currentMenu = lcd_status_screen;
 }
 
-static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
+void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     oldX = current_position[X_AXIS];
     oldY = current_position[Y_AXIS];
@@ -333,7 +334,7 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     enquecommand(strTemp);
 
     //raise extruder (Z axis)
-    sprintf_P(strTemp, PSTR("G0 Z%s F9000"), ftostr74(oldZ+10.0));
+    sprintf_P(strTemp, PSTR("G0 Z%s F9000"), ftostr74(oldZ+5.0));
     enquecommand(strTemp);
 
     // move bed forward (Y axis) and extruder out of the way (X axis)
@@ -342,12 +343,14 @@ static void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BU
     sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS)); // G162
     enquecommand(strTemp);
 
-    card.pauseSDPrint();
+    if(card.sdprinting) {
+        using_sd_card = true;
+        card.pauseSDPrint();
+        lcdDrawUpdate = 2;
+    }
     bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
-    lcdDrawUpdate = 2;
-    
 }
-static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
+void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     // move X and Y axis to zero quickly
     //sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
@@ -376,9 +379,12 @@ static void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-B
     enquecommand(strTemp);   
 
     // resume the print
-    card.startFileprint();
+    if(using_sd_card) {
+        using_sd_card = false;
+        card.startFileprint();
+        lcdDrawUpdate = 2;
+    }
     bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
-    lcdDrawUpdate = 2;
 }
 static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
@@ -1978,8 +1984,10 @@ void lcd_buttons_update()
     uint8_t newbuttons=0;
     static uint32_t repeatDelayMillis = 0;
 
-    if(READ(BTN_ENC)==0)
+    if(READ(BTN_ENC)==0){
         newbuttons |= EN_C;
+        //lcd_implementation_init(); // to maybe revive the lcd if static electricity killed it. //jkl;
+    }
     if(READ(BTN_UP)==0)
         newbuttons |= B_UP;
     if(READ(BTN_DWN)==0)
