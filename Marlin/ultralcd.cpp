@@ -51,8 +51,8 @@ static void lcd_status_screen();
 static void lcd_return_to_status();
 #ifdef ULTIPANEL
 static void lcd_main_menu();
+static void lcd_quick_menu();
 static void lcd_tune_menu();
-static void lcd_prepare_menu();
 static void lcd_heat_cool_menu();
 static void lcd_bed_level_menu();
 static void lcd_move_menu();
@@ -126,7 +126,7 @@ static void menu_action_setting_edit_callback_long5(const char* pstr, unsigned l
                 lcd_implementation_drawmenu_ ## type (_drawLineNr, _label_pstr , ## args ); \
             }\
         }\
-        if ((LCD_CLICKED || buttons&B_RI) && (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) {\
+        if ((LCD_CLICKED) && (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) {\
             lcd_quick_feedback(); \
             menu_action_ ## type ( args ); \
             return;\
@@ -231,7 +231,7 @@ static void lcd_show_about_cancel()
     lcdDrawUpdate = 2;
 }
 
-/* Main status screen. It's up to the implementation specific part to show what is needed. As this is very display dependend */
+/* Main status screen. It's up to the implementation specific part to show what is needed. As this is very display dependent */
 static void lcd_status_screen()
 {
     static int feedLast = 0;    //  For tracking feedmultiply changes
@@ -251,15 +251,19 @@ static void lcd_status_screen()
         lcd_status_update_millis = millis() + LCD_STATUS_UPDATE_INTERVAL;
     }
 
-    if (LCD_CLICKED || buttons&B_RI)
+    // if right button clicked
+    if (LCD_CLICKED || buttons&B_RI || buttons&B_LE) //jkl;
     {
         encoderPosition = 0;
         lcd_quick_feedback();
         if ( lcdShowAbout )
             lcd_show_about_cancel();
+        else if(buttons&B_LE) 
+            currentMenu = lcd_quick_menu;
         else
             currentMenu = lcd_main_menu;
     }
+
 
     // Dead zone at 100% feedrate
     if (feedmultiply < 100 && (feedmultiply + int(encoderPosition)) > 100 ||
@@ -458,16 +462,18 @@ static void lcd_main_menu()
 #endif
     }
 #endif //SDSUPPORT
-
+    /*
     if (movesplanned() || IS_SD_PRINTING)
     {
-        MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu);
-        }else{
-        MENU_ITEM(submenu, MSG_PREPARE, lcd_prepare_menu);
-    }
+        MENU_ITEM(submenu, MSG_TUNE, lcd_tune_menu); //jkl;
+    }*/
+    
+    MENU_ITEM(submenu, MSG_HEAT_COOL, lcd_heat_cool_menu);
+    MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
+    MENU_ITEM(submenu, MSG_FILAMENTCHANGE, lcd_filament_menu);
+    MENU_ITEM(submenu, MSG_BED_LEVEL, lcd_bed_level_menu);
     MENU_ITEM(submenu, MSG_CONTROL, lcd_control_menu);
 //    MENU_ITEM(submenu, MSG_UTILITIES, lcd_utilities_menu);
-    MENU_ITEM(function, "About", lcd_show_about);
     END_MENU();
 }
 
@@ -483,21 +489,6 @@ static void lcd_autostart_sd()
 //####################################################################################################
 //  Tune / Prepare
 //####################################################################################################
-//  Prepare will show when not running
-static void lcd_prepare_menu()
-{
-    START_MENU();
-    MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
-    MENU_ITEM(submenu, MSG_HEAT_COOL, lcd_heat_cool_menu);
-    MENU_ITEM(submenu, MSG_MOVE_AXIS, lcd_move_menu);
-    MENU_ITEM(submenu, MSG_FILAMENTCHANGE, lcd_filament_menu);
-#ifdef  DAC_DRIVER
-        MENU_ITEM(submenu, MSG_DAC, lcd_dac_menu);
-#endif
-    MENU_ITEM(submenu, MSG_BED_LEVEL, lcd_bed_level_menu);
-    //MENU_ITEM(gcode, MSG_SET_ORIGIN, PSTR("G92 X0 Y0 Z0"));
-    END_MENU();
-}
 
 //  Tune will show while running
 static void lcd_tune_menu()
@@ -523,12 +514,9 @@ MENU_ITEM_EDIT(int3, MSG_NOZZLE2, &target_temperature[2], 0, HEATER_2_MAXTEMP - 
 #endif
     MENU_ITEM_EDIT(int3, MSG_FAN_SPEED, &fanSpeed, 0, 255);
     MENU_ITEM_EDIT(int3, MSG_FLOW, &extrudemultiply, 10, 999);
-#ifdef  DAC_DRIVER
-        MENU_ITEM(submenu, "DriveStrength", lcd_dac_menu);
-#endif
-#ifdef FILAMENTCHANGEENABLE
-     MENU_ITEM(gcode, MSG_FILAMENTCHANGE, PSTR("M600"));
-#endif
+//#ifdef FILAMENTCHANGEENABLE
+//     MENU_ITEM(gcode, MSG_FILAMENTCHANGE, PSTR("M600"));
+//#endif
     END_MENU();
 }
 
@@ -690,7 +678,7 @@ static void lcd_dac_menu()
   // create and destroy the DAC object here
     //int a,b,c,d = 0; //These will be used to store the 4 dac channel values for printing and editing
     START_MENU();
-    MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
+    MENU_ITEM_BACK(back, MSG_CONTROL, lcd_control_menu);
     //MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(submenu, "Drive X", lcd_driver_x);
     MENU_ITEM(submenu, "Drive Y", lcd_driver_y);
@@ -773,7 +761,7 @@ void lcd_preheat_abs()
 static void lcd_heat_cool_menu()
 {
     START_MENU();
-    MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
+    MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(function, MSG_PREHEAT_PLA, lcd_preheat_pla);
     MENU_ITEM(function, MSG_PREHEAT_ABS, lcd_preheat_abs);
     MENU_ITEM(function, MSG_COOLDOWN, lcd_cooldown);
@@ -937,7 +925,7 @@ static void lcd_move_menu_01mm()
 static void lcd_move_menu()
 {
     START_MENU();
-    MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
+    MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(submenu, "Jog Axis", lcd_jog_menu);
     MENU_ITEM(gcode, MSG_AUTO_HOME, PSTR("G28"));
     MENU_ITEM(submenu, "Move 10mm", lcd_move_menu_10mm);
@@ -1020,10 +1008,10 @@ static void lcd_jog()
     if (lcdDrawUpdate)
     {
         //lcd_implementation_drawedit(PSTR("X"), ftostr31(current_position[X_AXIS]));
-        lcd.setCursor(1, 0);
+        lcd.setCursor(0, 0);
         if ( jogMode == 0 )
         {
-            lcd_printPGM(PSTR("Jog X/Y Axis"));
+            lcd_printPGM(PSTR(" Jog X/Y Axis"));
 
             lcd.setCursor(1, 1);
             lcd_printPGM(PSTR("X: "));
@@ -1037,7 +1025,7 @@ static void lcd_jog()
         }
         else if ( jogMode == 1 )
         {
-            lcd_printPGM(PSTR("Jog Z Axis"));
+            lcd_printPGM(PSTR(" Jog Z Axis"));
 
             lcd.setCursor(1, 1);
             lcd_printPGM(PSTR("Z: "));
@@ -1046,7 +1034,7 @@ static void lcd_jog()
         }
         else if ( jogMode == 2 )
         {
-            lcd_printPGM(PSTR("Jog Extruder"));
+            lcd_printPGM(PSTR(" Jog Extruder"));
 
             lcd.setCursor(1, 1);
             lcd_printPGM(PSTR("E"));
@@ -1237,7 +1225,7 @@ static void lcd_filament_menu()
     sprintf_P(strTemp, PSTR("Next Extruder (%d" LCD_STR_ARROW_RIGHT "%d)"), active_extruder, next_extruder);
 
     START_MENU();
-    MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
+    MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(submenu, "Load Filament", lcd_filament_load);
     MENU_ITEM(submenu, "Unload Filament", lcd_filament_unload);
     MENU_ITEM(submenu, "Clean Nozzle", lcd_filament_clean);
@@ -1407,7 +1395,7 @@ static void lcd_bed_level_run()
     }
     else if ( levelStep == -1 )
     {
-        MENU_ITEM_BACK(back, MSG_PREPARE, lcd_prepare_menu);
+        MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
         MENU_ITEM(function, "Level Bed", lcd_bed_level_start);
         MENU_ITEM(function, "Check Extents", lcd_bed_level_extents);
         //      MENU_ITEM(submenu, "Sync Z Steppers", lcd_bed_level_syncZ);
@@ -1446,22 +1434,26 @@ static void lcd_control_menu()
 {
     START_MENU();
     MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
-    MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
     MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
+    MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
 #ifdef FWRETRACT
     MENU_ITEM(submenu, MSG_RETRACT, lcd_control_retract_menu);
+#endif
+#ifdef  DAC_DRIVER
+        MENU_ITEM(submenu, MSG_DAC, lcd_dac_menu);
 #endif
 #ifdef EEPROM_SETTINGS
     MENU_ITEM(function, MSG_STORE_EPROM, Config_StoreSettings);
     MENU_ITEM(function, MSG_LOAD_EPROM, Config_RetrieveSettings);
 #endif
     MENU_ITEM(function, MSG_RESTORE_FAILSAFE, Config_ResetDefault);
+    MENU_ITEM(function, "About", lcd_show_about);
     END_MENU();
 }
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-ToDo:  jkl;
+ToDo: 
 Add misc settings menu
 -make timing more accurate
 */
@@ -1686,6 +1678,31 @@ void lcd_sdcard_menu()
             MENU_ITEM_DUMMY();
         }
     }
+    END_MENU();
+}
+
+
+static void lcd_quick_menu(){
+    START_MENU();
+    MENU_ITEM_BACK(back, MSG_WATCH, lcd_status_screen);
+    MENU_ITEM(submenu, "Jog Z", lcd_jog_z);
+    MENU_ITEM(gcode, "Home X/Y", PSTR("G28 X Y"));
+    MENU_ITEM(gcode, MSG_DISABLE_STEPPERS, PSTR("M84"));
+    MENU_ITEM_EDIT(int3, MSG_NOZZLE, &target_temperature[0], 0, HEATER_0_MAXTEMP - 15);
+    #if EXTRUDERS >= 2
+        MENU_ITEM_EDIT(int3, MSG_NOZZLE1, &target_temperature[1], 0, HEATER_1_MAXTEMP - 15);
+    #endif
+    #if EXTRUDERS >= 3
+        MENU_ITEM_EDIT(int3, MSG_NOZZLE2, &target_temperature[2], 0, HEATER_1_MAXTEMP - 15);
+    #endif
+    #if TEMP_SENSOR_BED != 0
+        MENU_ITEM_EDIT(int3, MSG_BED, &target_temperature_bed, 0, BED_MAXTEMP - 15);
+    #endif
+    MENU_ITEM(function, MSG_COOLDOWN, lcd_cooldown);
+    MENU_ITEM_EDIT(int3, MSG_FAN_SPEED, &fanSpeed, 0, 255);
+    MENU_ITEM_EDIT(int3, MSG_SPEED, &feedmultiply, 10, 999);
+    MENU_ITEM_EDIT(int3, MSG_FLOW, &extrudemultiply, 10, 999);
+    
     END_MENU();
 }
 
@@ -1986,7 +2003,6 @@ void lcd_buttons_update()
 
     if(READ(BTN_ENC)==0){
         newbuttons |= EN_C;
-        //lcd_implementation_init(); // to maybe revive the lcd if static electricity killed it. //jkl;
     }
     if(READ(BTN_UP)==0)
         newbuttons |= B_UP;
