@@ -467,7 +467,11 @@ void setup()
       pinMode(41, INPUT);     // set to input, which allows it to be pulled high by pullups
                               // the system power up should be done by now
   #endif
-  enquecommand_P("G28 X Y");
+
+  // home X/Y axes on startup    
+  #ifdef HOME_ON_STARTUP
+    enquecommand("G28 X Y"); // home X/Y axes on startup
+  #endif
 }
 
 

@@ -15,6 +15,11 @@
 #define		RIGIDBOT_VERSION	"1.11"
 #define		RIGIDBOT_DATE		"2015-01-20"
 
+//#define HOME_ON_STARTUP // uncomment this line to cause the printer to automatically home the X and Y axes on printer startup
+
+
+
+
 
 // This configuration file contains the basic settings.
 // Advanced settings can be found in Configuration_adv.h
