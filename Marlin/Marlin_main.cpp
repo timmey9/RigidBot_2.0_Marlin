@@ -472,11 +472,17 @@ void setup()
   #ifdef HOME_ON_STARTUP
     enquecommand("G28 X Y"); // home X/Y axes on startup
   #endif
+  pinMode(11,OUTPUT);
+  digitalWrite(11,LOW);
 }
 
 
 void loop()
 {
+  
+  //digitalWrite(11,HIGH);
+  //delay(2000);
+  //digitalWrite(11,LOW);
   if(buflen < BUF_FILL_SIZE)
     get_command();
   #ifdef SDSUPPORT
@@ -512,11 +518,26 @@ void loop()
     #else
       process_commands();
     #endif //SDSUPPORT
-    //MYSERIAL.print("echo: buflen: "); // jkl;
-    //MYSERIAL.print(buflen);
-    //MYSERIAL.print("  Command just run: ");
-    //MYSERIAL.println(cmdbuffer[bufindr]);
-    for(int i = 0; i < MAX_CMD_SIZE; i++) cmdbuffer[bufindr][i] = 0; //jkl;
+
+    MYSERIAL.println("********************"); //jkl;
+    //MYSERIAL.print("block buflen:");
+    //MYSERIAL.println(get_block_buffer_len());
+    MYSERIAL.print("buflen: ");
+    MYSERIAL.print(buflen);
+    MYSERIAL.print("  Head:");
+    MYSERIAL.print(bufindr);
+    MYSERIAL.print("  Tail:");
+    MYSERIAL.println(bufindw);
+    MYSERIAL.print("Command just run: ");
+    MYSERIAL.println(cmdbuffer[bufindr]);
+    /*
+    for(int i = 0; i < BUFSIZE; i++) {
+      MYSERIAL.print(i);
+      MYSERIAL.print(": ");
+      MYSERIAL.println(cmdbuffer[i]);
+    }*/
+    for(int i = 0; i < MAX_CMD_SIZE; i++) cmdbuffer[bufindr][i] = 0; //clear the buffer line
+    
     buflen = (buflen-1);
     bufindr = (bufindr + 1)%BUFSIZE;
     

@@ -334,7 +334,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     oldFeedrate = feedrate;
 
     // retract extruder (E axis)
-    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-4.0));
     enquecommand(strTemp);
 
     //raise extruder (Z axis)
@@ -344,7 +344,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     // move bed forward (Y axis) and extruder out of the way (X axis)
     sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS)); // G162
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-10)); // G162
     enquecommand(strTemp);
 
     if(card.sdprinting) {
@@ -399,7 +399,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     oldE = current_position[E_AXIS];
     
     // retract extruder (E axis)
-    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-1.0));
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-4.0));
     enquecommand(strTemp);
 
     //raise extruder (Z axis)
@@ -407,7 +407,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     enquecommand(strTemp);
 
     // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), Y_MAX_POS);
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS-10));
     enquecommand(strTemp);
     
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
