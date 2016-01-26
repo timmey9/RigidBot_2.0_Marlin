@@ -483,7 +483,7 @@ void loop()
   //digitalWrite(11,HIGH);
   //delay(2000);
   //digitalWrite(11,LOW);
-  if(buflen < BUF_FILL_SIZE)
+  if(get_block_buffer_len() < BUF_FILL_SIZE)
     get_command();
   #ifdef SDSUPPORT
   card.checkautostart(false);
@@ -519,17 +519,15 @@ void loop()
       process_commands();
     #endif //SDSUPPORT
 
-    MYSERIAL.println("********************"); //jkl;
-    //MYSERIAL.print("block buflen:");
-    //MYSERIAL.println(get_block_buffer_len());
-    MYSERIAL.print("buflen: ");
-    MYSERIAL.print(buflen);
-    MYSERIAL.print("  Head:");
-    MYSERIAL.print(bufindr);
-    MYSERIAL.print("  Tail:");
-    MYSERIAL.println(bufindw);
-    MYSERIAL.print("Command just run: ");
-    MYSERIAL.println(cmdbuffer[bufindr]);
+    //MYSERIAL.println("********************"); //jkl;
+    //MYSERIAL.print("buflen: ");
+    //MYSERIAL.print(buflen);
+    //MYSERIAL.print("  Head:");
+    //MYSERIAL.print(bufindr);
+    //MYSERIAL.print("  Tail:");
+    //MYSERIAL.println(bufindw);
+    //MYSERIAL.print("Command just run: ");
+    //MYSERIAL.println(cmdbuffer[bufindr]);
     /*
     for(int i = 0; i < BUFSIZE; i++) {
       MYSERIAL.print(i);
@@ -943,7 +941,7 @@ void process_commands()
 	  
 
       #ifdef QUICK_HOME
-      if((home_all_axis)||( code_seen(axis_codes[X_AXIS]) && code_seen(axis_codes[Y_AXIS])) )  //first diagonal move
+      if( (home_all_axis) || ( code_seen(axis_codes[X_AXIS]) && code_seen(axis_codes[Y_AXIS])) )  //first diagonal move
       {
         current_position[X_AXIS] = 0;current_position[Y_AXIS] = 0;
 
@@ -1060,7 +1058,7 @@ void process_commands()
     {
 #ifdef ULTIPANEL
     case 0: // M0 - Unconditional stop - Wait for user button press on LCD
-    case 1: // M1 - Conditional stop - Wait for user button press on LCD
+    //case 1: // M1 - Conditional stop - Wait for user button press on LCD
     {
       MYSERIAL.print("echo:Command: ");
       MYSERIAL.println(cmdbuffer[bufindr]); //jkl;
@@ -1130,7 +1128,7 @@ void process_commands()
       break;
     case 24: //M24 - Start SD print
       card.startFileprint();
-      starttime=millis();
+      if(!code_seen('R')) starttime=millis();
       break;
     case 25: //M25 - Pause SD print
       card.pauseSDPrint();

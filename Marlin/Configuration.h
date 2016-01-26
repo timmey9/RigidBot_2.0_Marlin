@@ -296,7 +296,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
 
-//#define QUICK_HOME
+#define QUICK_HOME
 
 #define min_software_endstops true //If true, axis won't move to coordinates less than HOME_POS.
 #define max_software_endstops true  //If true, axis won't move to coordinates greater than the defined lengths below.
@@ -357,20 +357,13 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 //// MOVEMENT SETTINGS
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
 #define HOMING_FEEDRATE {5000, 5000, 5000, 0}  // set the homing speeds (mm/min)
-//#define HOMING_FEEDRATE {25*60, 25*60, 15*60, 0}  // set the homing speeds (mm/min)
 
 // default settings
-#ifdef RIGIDBOARD
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.3090,44.3090,1600,53.5}//760*1.1} //z was 400 before new motors // default steps per unit for Rigidbot //22.1545 for 8th ms
-#else
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.3090,22.1545,1600,53.5}//760*1.1} //z was 400 before new motors // default steps per unit for Rigidbot //22.1545 for 8th ms
-#endif
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.3090,44.3090,1600,53.5} // default steps per unit for Rigidbot
 #define DEFAULT_MAX_FEEDRATE          {700, 500, 4, 25}    // (mm/sec), velocity
 #define DEFAULT_MAX_ACCELERATION      {1200,600,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
-//#define DEFAULT_ACCELERATION          3000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
 #define DEFAULT_ACCELERATION          600    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
-//#define DEFAULT_ACCELERATION          1000    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
 #define DEFAULT_RETRACT_ACCELERATION  1000   // X, Y, Z and E max acceleration in mm/s^2 for r retracts
 
 // Offset of the extruders (uncomment if using more than one and relying on firmware to position when changing).
@@ -380,11 +373,9 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 // #define EXTRUDER_OFFSET_Y {0.0, 5.00}  // (in mm) for each extruder, offset of the hotend on the Y axis
 
 // The speed change that does not require acceleration (i.e. the software might assume it can be done instanteneously)
-//#define DEFAULT_XYJERK                20.0    // (mm/sec)
-#define DEFAULT_XYJERK                10.0//5.0    // (mm/sec)
-//#define DEFAULT_XYJERK                10.0    // (mm/sec)
+#define DEFAULT_XYJERK                10.0    // (mm/sec)
 #define DEFAULT_ZJERK                 0.4     // (mm/sec)
-#define DEFAULT_EJERK                 5.0    // (mm/sec)
+#define DEFAULT_EJERK                 5.0     // (mm/sec)
 
 //===========================================================================
 //=============================Additional Features===========================
@@ -406,11 +397,11 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 
 // Preheat Constants
-#define PLA_PREHEAT_HOTEND_TEMP		200
+#define PLA_PREHEAT_HOTEND_TEMP     200
 #define PLA_PREHEAT_HPB_TEMP		    40
 #define PLA_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
-#define ABS_PREHEAT_HOTEND_TEMP		230
+#define ABS_PREHEAT_HOTEND_TEMP		  230
 #define ABS_PREHEAT_HPB_TEMP		    70
 #define ABS_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 

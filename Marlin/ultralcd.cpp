@@ -90,6 +90,7 @@ static void menu_action_sddirectory(const char* filename, char* longFilename, ui
 static void menu_action_setting_edit_bool(const char* pstr, bool* ptr);
 static void menu_action_setting_edit_int3(const char* pstr, int* ptr, int minValue, int maxValue);
 static void menu_action_setting_edit_float3(const char* pstr, float* ptr, float minValue, float maxValue);
+static void menu_action_setting_edit_float3_signed(const char* pstr, float* ptr, float minValue, float maxValue);
 static void menu_action_setting_edit_float32(const char* pstr, float* ptr, float minValue, float maxValue);
 static void menu_action_setting_edit_float5(const char* pstr, float* ptr, float minValue, float maxValue);
 static void menu_action_setting_edit_float51(const char* pstr, float* ptr, float minValue, float maxValue);
@@ -258,10 +259,10 @@ static void lcd_status_screen()
         lcd_quick_feedback();
         if ( lcdShowAbout )
             lcd_show_about_cancel();
-        else if(buttons&B_LE) 
-            currentMenu = lcd_quick_menu;
-        else
+        else if(buttons&B_RI) 
             currentMenu = lcd_main_menu;
+        else
+            currentMenu = lcd_quick_menu;
     }
 
 
@@ -344,12 +345,15 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     // move bed forward (Y axis) and extruder out of the way (X axis)
     sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-10)); // G162
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-10+add_homeing[1])); // G162
     enquecommand(strTemp);
 
+    
     if(card.sdprinting) {
         using_sd_card = true;
-        card.pauseSDPrint();
+        //card.pauseSDPrint();
+        sprintf_P(strTemp, PSTR("M25")); // pause SD card
+        enquecommand(strTemp);
         lcdDrawUpdate = 2;
     }
     bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
@@ -361,7 +365,7 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
     //enquecommand(strTemp);
     
     // home Y, then X, just to make sure nothing was messed up
-    sprintf_P(strTemp, PSTR("G28 Y0 X0"));
+    sprintf_P(strTemp, PSTR("G28 X Y"));
     enquecommand(strTemp);
     
     // return X and Y to original position before the pause
@@ -382,10 +386,13 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
     sprintf_P(strTemp, PSTR("G0 F%s"), ftostr6(oldFeedrate));
     enquecommand(strTemp);   
 
+
     // resume the print
     if(using_sd_card) {
         using_sd_card = false;
-        card.startFileprint();
+        //card.startFileprint();
+        sprintf_P(strTemp, PSTR("M24 R")); // resume SD card
+        enquecommand(strTemp);
         lcdDrawUpdate = 2;
     }
     bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
@@ -407,7 +414,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     enquecommand(strTemp);
 
     // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS-10));
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS-10+add_homeing[1]));
     enquecommand(strTemp);
     
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
@@ -419,11 +426,13 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     sprintf_P(strTemp, PSTR("M107")); // turn off part fans
     enquecommand(strTemp);
 
-    card.pauseSDPrint();
-
-    delay(200);
+    //card.pauseSDPrint();
+    if(card.sdprinting){
+        sprintf_P(strTemp, PSTR("M25")); // pause SD card
+        enquecommand(strTemp);
+    }
     
-    quickStop();
+    //quickStop();
     if(SD_FINISHED_STEPPERRELEASE)
     {
         enquecommand_P(PSTR(SD_FINISHED_RELEASECOMMAND));
@@ -432,6 +441,24 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     card.sdprinting = false;
     card.closefile();
     lcdDrawUpdate = 2;
+}
+
+static void lcd_move_origin_return(){
+    current_position[X_AXIS] = current_position[X_AXIS] + add_homeing[0];
+    current_position[Y_AXIS] = current_position[Y_AXIS] + add_homeing[1];
+    current_position[Z_AXIS] = current_position[Z_AXIS] + add_homeing[2];
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
+    lcd_quick_feedback();
+    menu_action_back(lcd_control_menu);
+}
+
+static void lcd_move_origin(){
+    START_MENU();
+    MENU_ITEM_BACK(back, MSG_CONTROL, lcd_move_origin_return); // runs the "lcd_move_origin_return" function and then returns to "lcd_control_menu"
+    MENU_ITEM_EDIT(float3_signed, "X Offset", &add_homeing[0], -X_MAX_POS, X_MAX_POS);
+    MENU_ITEM_EDIT(float3_signed, "Y Offset", &add_homeing[1], -Y_MAX_POS, Y_MAX_POS); //jkl;
+    MENU_ITEM_EDIT(float3_signed, "Z Offset", &add_homeing[2], -Z_MAX_POS, Z_MAX_POS);
+    END_MENU();  
 }
 
 /* Menu implementation */
@@ -804,10 +831,10 @@ static void lcd_move_x()
     if (encoderPosition != 0)
     {
         current_position[X_AXIS] += float((int)encoderPosition) * move_menu_scale;
-        if (current_position[X_AXIS] < X_MIN_POS)
-            current_position[X_AXIS] = X_MIN_POS;
-        if (current_position[X_AXIS] > X_MAX_POS)
-            current_position[X_AXIS] = X_MAX_POS;
+        if (current_position[X_AXIS] < X_MIN_POS+add_homeing[0])
+            current_position[X_AXIS] = X_MIN_POS+add_homeing[0];
+        if (current_position[X_AXIS] > X_MAX_POS+add_homeing[0])
+            current_position[X_AXIS] = X_MAX_POS+add_homeing[0];
         encoderPosition = 0;
         plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], 600, active_extruder);
         lcdDrawUpdate = 1;
@@ -828,10 +855,10 @@ static void lcd_move_y()
     if (encoderPosition != 0)
     {
         current_position[Y_AXIS] += float((int)encoderPosition) * move_menu_scale;
-        if (current_position[Y_AXIS] < Y_MIN_POS)
-            current_position[Y_AXIS] = Y_MIN_POS;
-        if (current_position[Y_AXIS] > Y_MAX_POS)
-            current_position[Y_AXIS] = Y_MAX_POS;
+        if (current_position[Y_AXIS] < Y_MIN_POS+add_homeing[1])
+            current_position[Y_AXIS] = Y_MIN_POS+add_homeing[1];
+        if (current_position[Y_AXIS] > Y_MAX_POS+add_homeing[1])
+            current_position[Y_AXIS] = Y_MAX_POS+add_homeing[1];
         encoderPosition = 0;
         plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], 600, active_extruder);
         lcdDrawUpdate = 1;
@@ -852,10 +879,10 @@ static void lcd_move_z()
     if (encoderPosition != 0)
     {
         current_position[Z_AXIS] += float((int)encoderPosition) * move_menu_scale;
-        if (current_position[Z_AXIS] < Z_MIN_POS)
-            current_position[Z_AXIS] = Z_MIN_POS;
-        if (current_position[Z_AXIS] > Z_MAX_POS)
-            current_position[Z_AXIS] = Z_MAX_POS;
+        if (current_position[Z_AXIS] < Z_MIN_POS+add_homeing[2])
+            current_position[Z_AXIS] = Z_MIN_POS+add_homeing[2];
+        if (current_position[Z_AXIS] > Z_MAX_POS+add_homeing[2])
+            current_position[Z_AXIS] = Z_MAX_POS+add_homeing[2];
         encoderPosition = 0;
         plan_buffer_line(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS], 60, active_extruder);
         lcdDrawUpdate = 1;
@@ -982,22 +1009,22 @@ static void lcd_jog()
     if ( (jogX != 0 || jogY != 0 || jogZ || jogE) && movesplanned() < 3 )
     {
         current_position[X_AXIS] += jogX;
-        if (current_position[X_AXIS] < X_MIN_POS)
-            current_position[X_AXIS] = X_MIN_POS;
-        if (current_position[X_AXIS] > X_MAX_POS)
-            current_position[X_AXIS] = X_MAX_POS;
+        if (current_position[X_AXIS] < X_MIN_POS+add_homeing[0])
+            current_position[X_AXIS] = X_MIN_POS+add_homeing[0];
+        if (current_position[X_AXIS] > X_MAX_POS+add_homeing[0])
+            current_position[X_AXIS] = X_MAX_POS+add_homeing[0];
 
         current_position[Y_AXIS] += jogY;
-        if (current_position[Y_AXIS] < Y_MIN_POS)
-            current_position[Y_AXIS] = Y_MIN_POS;
-        if (current_position[Y_AXIS] > Y_MAX_POS)
-            current_position[Y_AXIS] = Y_MAX_POS;
+        if (current_position[Y_AXIS] < Y_MIN_POS+add_homeing[1])
+            current_position[Y_AXIS] = Y_MIN_POS+add_homeing[1];
+        if (current_position[Y_AXIS] > Y_MAX_POS+add_homeing[1])
+            current_position[Y_AXIS] = Y_MAX_POS+add_homeing[1];
 
         current_position[Z_AXIS] += jogZ;
-        if (current_position[Z_AXIS] < Z_MIN_POS)
-            current_position[Z_AXIS] = Z_MIN_POS;
-        if (current_position[Z_AXIS] > Z_MAX_POS)
-            current_position[Z_AXIS] = Z_MAX_POS;
+        if (current_position[Z_AXIS] < Z_MIN_POS+add_homeing[2])
+            current_position[Z_AXIS] = Z_MIN_POS+add_homeing[2];
+        if (current_position[Z_AXIS] > Z_MAX_POS+add_homeing[2])
+            current_position[Z_AXIS] = Z_MAX_POS+add_homeing[2];
 
         current_position[E_AXIS] += jogE;
 
@@ -1091,7 +1118,6 @@ static void lcd_jog_e()
 
 static void lcd_jog_menu()
 {
-    lastMenu = lcd_jog_menu;
     START_MENU();
     MENU_ITEM_BACK(back, MSG_MOVE_AXIS, lcd_move_menu);
     MENU_ITEM(submenu, "Jog Z", lcd_jog_z);
@@ -1249,20 +1275,20 @@ bool moveHead = false;
 //  Point list for bed leveling script
 const uint16_t LEVEL_POINTS[][2] = {
     { BED_LEVEL_Z_LIFT, 4 },        //  First record is { Z_LIFT, NUM_POINTS }
-    { X_MIN_POS+35, Y_CENTER_POS-50 },
-    { X_MIN_POS+35, Y_CENTER_POS+50 },
-    { X_MAX_POS-35, Y_CENTER_POS+50 },
-    { X_MAX_POS-35, Y_CENTER_POS-50 }
+    { X_MIN_POS+35+add_homeing[0], Y_CENTER_POS-50+add_homeing[1] },
+    { X_MIN_POS+35+add_homeing[0], Y_CENTER_POS+50+add_homeing[1] },
+    { X_MAX_POS-35+add_homeing[0], Y_CENTER_POS+50+add_homeing[1] },
+    { X_MAX_POS-35+add_homeing[0], Y_CENTER_POS-50+add_homeing[1] }
 };
 
 //  Point list for bed leveling extents script
 const uint16_t LEVEL_EXTENTS[][2] = {
     { BED_LEVEL_Z_LIFT, 5 },        //  First record is { Z_LIFT, NUM_POINTS }
-    { X_MIN_POS+10, Y_MIN_POS+10 },
-    { X_MIN_POS+10, Y_MAX_POS-10 },
-    { X_MAX_POS-10, Y_MAX_POS-10 },
-    { X_MAX_POS-10, Y_MIN_POS+10 },
-    { X_CENTER_POS, Y_CENTER_POS }
+    { X_MIN_POS+10+add_homeing[0], Y_MIN_POS+10+add_homeing[1] },
+    { X_MIN_POS+10+add_homeing[0], Y_MAX_POS-10+add_homeing[1] },
+    { X_MAX_POS-10+add_homeing[0], Y_MAX_POS-10+add_homeing[1] },
+    { X_MAX_POS-10+add_homeing[0], Y_MIN_POS+10+add_homeing[1] },
+    { X_CENTER_POS+add_homeing[0], Y_CENTER_POS+add_homeing[1] }
 };
 
 static void lcd_bed_level_run();    //  Function prototype
@@ -1436,6 +1462,7 @@ static void lcd_control_menu()
     MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
     MENU_ITEM(submenu, MSG_MOTION, lcd_control_motion_menu);
     MENU_ITEM(submenu, MSG_TEMPERATURE, lcd_control_temperature_menu);
+    MENU_ITEM(submenu, "Move Origin", lcd_move_origin);
 #ifdef FWRETRACT
     MENU_ITEM(submenu, MSG_RETRACT, lcd_control_retract_menu);
 #endif
@@ -1778,6 +1805,7 @@ static void lcd_quick_menu(){
     }
 menu_edit_type(int, int3, itostr3, 1)
 menu_edit_type(float, float3, ftostr3, 1)
+menu_edit_type(float, float3_signed, ftostr3_signed, 1)
 menu_edit_type(float, float32, ftostr32, 100)
 menu_edit_type(float, float5, ftostr5, 0.01)
 menu_edit_type(float, float51, ftostr51, 10)
@@ -2068,6 +2096,43 @@ char *itostr2(const uint8_t &x)
   conv[0]=(xx/10)%10+'0';
   conv[1]=(xx)%10+'0';
   conv[2]=0;
+  return conv;
+}
+
+//  convert float to string with +/-123 format
+char *ftostr3_signed(const float &x)
+{
+  MYSERIAL.print("* x:");
+  MYSERIAL.print(x,HEX);
+  MYSERIAL.print(" xx:");
+  // 01234
+  // +100
+  //  +10
+  //   +0
+  signed int xx=x;
+  MYSERIAL.print(xx,HEX);
+  char sign = (xx>=0)?'+':'-';
+  xx=abs(xx);
+  conv[4] = 0;
+  conv[3] = (xx)%10+'0';
+  if(xx>= 10){
+    conv[2] = (xx/10)%10+'0';
+    if(xx >= 100){
+        conv[1] = (xx/100)%10+'0';
+        conv[0] = sign;
+    }
+    else{
+        conv[1] = sign;
+        conv[0] = ' ';
+    }
+  }
+  else{
+    conv[2] = sign;
+    conv[1] = ' ';
+    conv[0] = ' ';
+  }
+  MYSERIAL.print(" conv:");
+  MYSERIAL.println(conv);
   return conv;
 }
 

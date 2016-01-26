@@ -303,17 +303,17 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 //===========================================================================
 
 // The number of linear motions that can be in the plan at any give time.  
-// THE BLOCK_BUFFER_SIZE NEEDS TO BE A POWER OF 2, i.g. 8,16,32 because shifts and ors are used to do the ringbuffering.
+// THE BLOCK_BUFFER_SIZE NEEDS TO BE A POWER OF 2, i.e. 8,16,32 because shifts and ors are used to do the ringbuffering.
 #if defined SDSUPPORT
-  #define BLOCK_BUFFER_SIZE 8   // SD,LCD,Buttons take more memory, block buffer needs to be smaller
-#else
+  #define BLOCK_BUFFER_SIZE 8 // SD,LCD,Buttons take more memory, block buffer needs to be smaller
+#else                         //
   #define BLOCK_BUFFER_SIZE 8 // maximize block buffer
 #endif
 
 
 //The ASCII buffer for recieving from the serial:
 #define MAX_CMD_SIZE 60//96
-#define BUFSIZE 8 // NOTE: In order for the pause/resume/stop functions to work properly, BUFSIZE must be greater than BUF_FILL_SIZE by at least 6.  This comes from the number of commands added to the buffer by the "lcd_sdcard_resume" function.
+#define BUFSIZE 9 // NOTE: In order for the pause/resume/stop functions to work properly, BUFSIZE must be greater than BUF_FILL_SIZE by at least 6.  This comes from the number of commands added to the buffer by the "lcd_sdcard_resume" function.
 #define BUF_FILL_SIZE 1 // there's really no reason to increase this beyond 1, but the option is here.
 
 // Firmware based and LCD controled retract
