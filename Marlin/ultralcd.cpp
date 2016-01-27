@@ -345,7 +345,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     // move bed forward (Y axis) and extruder out of the way (X axis)
     sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-10+add_homeing[1])); // G162
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS+add_homeing[1])); // G162
     enquecommand(strTemp);
 
     
@@ -414,7 +414,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     enquecommand(strTemp);
 
     // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS-10+add_homeing[1]));
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS+add_homeing[1]));
     enquecommand(strTemp);
     
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
@@ -432,6 +432,8 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
         enquecommand(strTemp);
     }
     
+    bedLeds.setLedSources(LED_ON, LED_ON, LED_ON);
+
     //quickStop();
     if(SD_FINISHED_STEPPERRELEASE)
     {
@@ -716,7 +718,7 @@ static void lcd_dac_menu()
     MENU_ITEM(submenu, "Drive Y", lcd_driver_y);
     MENU_ITEM(submenu, "Drive Z", lcd_driver_z);
     MENU_ITEM(submenu, "Drive E", lcd_driver_e);
-    MENU_ITEM(function,"Save Values",save_dac);
+    //MENU_ITEM(function,"Save Values",save_dac);
     END_MENU();
 }
 
@@ -1461,6 +1463,11 @@ static void lcd_bed_level_menu()
 //####################################################################################################
 //  Control Menu Routines
 //####################################################################################################
+static void eeprom_RetrieveSettings(){
+    Config_RetrieveSettings();
+    dac.voutWrite(driverX,driverY,driverZ,driverE);
+}
+
 static void lcd_control_menu()
 {
     START_MENU();
@@ -1476,7 +1483,7 @@ static void lcd_control_menu()
 #endif
 #ifdef EEPROM_SETTINGS
     MENU_ITEM(function, MSG_STORE_EPROM, Config_StoreSettings);
-    MENU_ITEM(function, MSG_LOAD_EPROM, Config_RetrieveSettings);
+    MENU_ITEM(function, MSG_LOAD_EPROM, eeprom_RetrieveSettings);
 #endif
     MENU_ITEM(function, MSG_RESTORE_FAILSAFE, Config_ResetDefault);
     MENU_ITEM(function, "About", lcd_show_about);

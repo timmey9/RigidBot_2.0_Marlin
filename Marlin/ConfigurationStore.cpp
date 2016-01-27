@@ -53,7 +53,7 @@ uint16_t VersionChecksumCalc()
 void Config_StoreSettings() 
 {
   uint16_t versionChecksum = VersionChecksumCalc();
-  
+
   char ver[4]= "000";
   int i=EEPROM_OFFSET;
   EEPROM_WRITE_VAR(i,ver); // invalidate data first
@@ -69,7 +69,11 @@ void Config_StoreSettings()
   EEPROM_WRITE_VAR(i,max_xy_jerk);
   EEPROM_WRITE_VAR(i,max_z_jerk);
   EEPROM_WRITE_VAR(i,max_e_jerk);
-  //EEPROM_WRITE_VAR(i,add_homeing);
+  EEPROM_WRITE_VAR(i,driverX);
+  EEPROM_WRITE_VAR(i,driverY);
+  EEPROM_WRITE_VAR(i,driverZ);
+  EEPROM_WRITE_VAR(i,driverE);
+  EEPROM_WRITE_VAR(i,add_homeing);
   #ifndef ULTIPANEL
   int plaPreheatHotendTemp = PLA_PREHEAT_HOTEND_TEMP, plaPreheatHPBTemp = PLA_PREHEAT_HPB_TEMP, plaPreheatFanSpeed = PLA_PREHEAT_FAN_SPEED;
   int absPreheatHotendTemp = ABS_PREHEAT_HOTEND_TEMP, absPreheatHPBTemp = ABS_PREHEAT_HPB_TEMP, absPreheatFanSpeed = ABS_PREHEAT_FAN_SPEED;
@@ -204,7 +208,11 @@ void Config_RetrieveSettings()
         EEPROM_READ_VAR(i,max_xy_jerk);
         EEPROM_READ_VAR(i,max_z_jerk);
         EEPROM_READ_VAR(i,max_e_jerk);
-        EEPROM_READ_VAR(i,add_homeing);
+        EEPROM_READ_VAR(i,driverX);
+        EEPROM_READ_VAR(i,driverY);
+        EEPROM_READ_VAR(i,driverZ);
+        EEPROM_READ_VAR(i,driverE);
+        EEPROM_WRITE_VAR(i,add_homeing);
         #ifndef ULTIPANEL
         int plaPreheatHotendTemp, plaPreheatHPBTemp, plaPreheatFanSpeed;
         int absPreheatHotendTemp, absPreheatHPBTemp, absPreheatFanSpeed;
@@ -260,6 +268,10 @@ void Config_ResetDefault()
     max_z_jerk=DEFAULT_ZJERK;
     max_e_jerk=DEFAULT_EJERK;
     add_homeing[0] = add_homeing[1] = add_homeing[2] = 0;
+    driverX = DEFAULT_DRIVER_X;
+    driverY = DEFAULT_DRIVER_Y;
+    driverZ = DEFAULT_DRIVER_Z;
+    driverE = DEFAULT_DRIVER_E;
 #ifdef ULTIPANEL
     plaPreheatHotendTemp = PLA_PREHEAT_HOTEND_TEMP;
     plaPreheatHPBTemp = PLA_PREHEAT_HPB_TEMP;

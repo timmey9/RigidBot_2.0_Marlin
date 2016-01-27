@@ -2,15 +2,11 @@
 #define CONFIGURATION_H
 
 //	Uncomment the following options for your machine
-//#define	RIGIDBOT_BIG // large x/y area
+#define	RIGIDBOT_BIG // large x/y area
 //#define RIGIDBOT_XL // larger z height
 //#define	RIGIDBOT_DUAL_EXTRUDER // two extruders
 
 #define RIGIDBOARD
-
-#ifdef RIGIDBOARD
-#define DAC_DRIVER
-#endif
 
 #define		RIGIDBOT_VERSION	"1.11"
 #define		RIGIDBOT_DATE		"2015-01-20"
@@ -18,7 +14,16 @@
 //#define HOME_ON_STARTUP // uncomment this line to cause the printer to automatically home the X and Y axes on printer startup
 
 
-
+#ifdef RIGIDBOARD
+#define DAC_DRIVER
+#define DAC_MIN 0 // 0.000 volts
+#define DAC_MAX 5000 // 5.000 volts
+#define DAC_SCALAR 50
+#define DEFAULT_DRIVER_X 50*DAC_SCALAR
+#define DEFAULT_DRIVER_Y 50*DAC_SCALAR
+#define DEFAULT_DRIVER_Z 75*DAC_SCALAR
+#define DEFAULT_DRIVER_E 50*DAC_SCALAR
+#endif
 
 
 // This configuration file contains the basic settings.
@@ -178,8 +183,8 @@
 
  //RigidBot New (PID Autotune didn't work)
  	#define  DEFAULT_Kp 10
- 	#define  DEFAULT_Ki 3.00//1.07
- 	#define  DEFAULT_Kd 400.0//260
+ 	#define  DEFAULT_Ki 3.00
+ 	#define  DEFAULT_Kd 400.0
 
 #endif // PIDTEMP
 

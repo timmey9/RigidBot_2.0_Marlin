@@ -35,7 +35,7 @@
 
   #define ENCODER_COARSE_STEP			10				//	step increment for coarse adjustments
 
-  #define BUTTON_REPEAT_DELAY			300
+  #define BUTTON_REPEAT_DELAY			500
 
   #define JOG_XY_SPEED		50
   #define JOG_XY_INC		3
@@ -58,6 +58,7 @@
   extern int absPreheatHPBTemp;
   extern int absPreheatFanSpeed;
   
+  extern uint16_t driverX, driverY, driverZ, driverE;
   
   void lcd_buzz(long duration,uint16_t freq);
   bool lcd_clicked();

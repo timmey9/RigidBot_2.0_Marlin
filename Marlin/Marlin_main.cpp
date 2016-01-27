@@ -197,6 +197,8 @@ int EtoPPressure=0;
   float retract_recover_length=0, retract_recover_feedrate=8*60;
 #endif
 
+//bool customSettings = 0;
+
 //===========================================================================
 //=============================private variables=============================
 //===========================================================================
@@ -376,18 +378,10 @@ void setup()
 {
   MYSERIAL.begin(BAUDRATE);
 
-  // initialize dac (digital trimpot)
-  #define DAC_MIN 0
-  #define DAC_MAX 5000
-  #define DAC_SCALAR 50
+  //reset digital trim pot (aka DAC)
   int LDACpin = 42; // set physical pin 42 to be held low to enable DAC
   pinMode(LDACpin, OUTPUT); 
   digitalWrite(LDACpin, LOW);
-  delay(10);
-  dac.begin();
-  dac.setGain(0, 0, 0, 0);
-  dac.setVref(0, 0, 0, 0);
-  dac.vdd(DAC_MAX);
   
   // initialize the heated bed led driver
   bedLeds.setPeriod0(2.0);
@@ -400,11 +394,12 @@ void setup()
 
   setup_killpin();
   setup_powerhold();
+
   #ifdef STEPPER_RESET_FIX
     pinMode(41, OUTPUT);    // set pin 51, digital pin 41, to output
     digitalWrite(41, LOW);  // drive it down to hold in reset motor driver chips
   #endif
-  //MYSERIAL.begin(BAUDRATE);
+  
   SERIAL_PROTOCOLLNPGM("start");
   SERIAL_ECHO_START;
 
@@ -441,7 +436,7 @@ void setup()
   {
     fromsd[i] = false;
   }
-
+  
   // loads data from EEPROM if available else uses defaults (and resets step acceleration rate)
   Config_RetrieveSettings();
 
@@ -453,6 +448,14 @@ void setup()
   servo_init();
 
   lcd_init();
+
+  // initialize dac (digital trimpot)
+  dac.begin();
+  dac.setGain(0, 0, 0, 0);
+  dac.setVref(0, 0, 0, 0);
+  dac.vdd(DAC_MAX);
+  dac.voutWrite(driverX,driverY,driverZ,driverE);
+  
 
   #if defined(CONTROLLERFAN_PIN) && CONTROLLERFAN_PIN > -1
     SET_OUTPUT(CONTROLLERFAN_PIN); //Set pin used for driver cooling fan
@@ -467,8 +470,8 @@ void setup()
   #ifdef HOME_ON_STARTUP
     enquecommand("G28 X Y"); // home X/Y axes on startup
   #endif
-  pinMode(11,OUTPUT);
-  digitalWrite(11,LOW);
+  pinMode(11,OUTPUT); //delete
+  digitalWrite(11,LOW); //delete
 }
 
 
