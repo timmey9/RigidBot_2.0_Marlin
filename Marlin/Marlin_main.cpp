@@ -388,11 +388,6 @@ void setup()
   dac.setGain(0, 0, 0, 0);
   dac.setVref(0, 0, 0, 0);
   dac.vdd(DAC_MAX);
-
-  if( dac.getVout(0) <50 && dac.getVout(1) < 50 && dac.getVout(2) < 50 && dac.getVout(3) < 50 ){
-      dac.voutWrite(DEFAULT_X_DRIVER_STRENGTH*50, DEFAULT_Y_DRIVER_STRENGTH*50, DEFAULT_Z_DRIVER_STRENGTH*50, DEFAULT_E_DRIVER_STRENGTH*50);
-      dac.eepromWrite();
-  }
   
   // initialize the heated bed led driver
   bedLeds.setPeriod0(2.0);

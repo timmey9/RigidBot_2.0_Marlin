@@ -112,7 +112,7 @@ static void menu_action_setting_edit_callback_long5(const char* pstr, unsigned l
 /* Helper macros for menus */
 #define START_MENU() do { \
     invertEncoderDir = true; \
-    if (encoderPosition > 0x8000) encoderPosition = 0; \
+    if (encoderPosition > 0x8000 || encoderPosition < 0 ) encoderPosition = 0; \
     if (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM < currentMenuViewOffset) currentMenuViewOffset = encoderPosition / ENCODER_STEPS_PER_MENU_ITEM;\
     uint8_t _lineNr = currentMenuViewOffset, _menuItemNr; \
     for(uint8_t _drawLineNr = 0; _drawLineNr < LCD_HEIGHT; _drawLineNr++, _lineNr++) { \
@@ -167,7 +167,7 @@ uint32_t blocking_enc;
 uint8_t lastEncoderBits;
 int8_t encoderDiff; /* encoderDiff is updated from interrupt context and added to encoderPosition every LCD update */
 int8_t encoderDiff2;
-uint32_t encoderPosition;
+int32_t encoderPosition; // this was originally uint32_t but I changed it.
 #if (SDCARDDETECT > 0)
 bool lcd_oldcardstatus;
 #endif
@@ -182,7 +182,7 @@ uint8_t lcdDrawUpdate = 2;                  /* Set to none-zero when the LCD nee
 
 //prevMenu and prevEncoderPosition are used to the previous menu location when editing settings.
 menuFunc_t prevMenu = NULL;
-uint16_t prevEncoderPosition;
+int16_t prevEncoderPosition; // this was originally uint16_t but I changed it.
 //Variables used when editing values.
 const char* editLabel;
 void* editValue;
@@ -253,7 +253,7 @@ static void lcd_status_screen()
     }
 
     // if right button clicked
-    if (LCD_CLICKED || buttons&B_RI || buttons&B_LE) //jkl;
+    if (LCD_CLICKED || buttons&B_RI) //jkl;
     {
         encoderPosition = 0;
         lcd_quick_feedback();
@@ -442,11 +442,16 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     card.closefile();
     lcdDrawUpdate = 2;
 }
-
+static float prev_homeing[3] = {0,0,0};
 static void lcd_move_origin_return(){
-    current_position[X_AXIS] = current_position[X_AXIS] + add_homeing[0];
-    current_position[Y_AXIS] = current_position[Y_AXIS] + add_homeing[1];
-    current_position[Z_AXIS] = current_position[Z_AXIS] + add_homeing[2];
+    current_position[X_AXIS] = current_position[X_AXIS] + add_homeing[0] - prev_homeing[0];
+    current_position[Y_AXIS] = current_position[Y_AXIS] + add_homeing[1] - prev_homeing[1];
+    current_position[Z_AXIS] = current_position[Z_AXIS] + add_homeing[2] - prev_homeing[2];
+    
+    prev_homeing[0] = add_homeing[0];
+    prev_homeing[1] = add_homeing[1];
+    prev_homeing[2] = add_homeing[2];
+    
     plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
     lcd_quick_feedback();
     menu_action_back(lcd_control_menu);
@@ -455,9 +460,9 @@ static void lcd_move_origin_return(){
 static void lcd_move_origin(){
     START_MENU();
     MENU_ITEM_BACK(back, MSG_CONTROL, lcd_move_origin_return); // runs the "lcd_move_origin_return" function and then returns to "lcd_control_menu"
-    MENU_ITEM_EDIT(float3_signed, "X Offset", &add_homeing[0], -X_MAX_POS, X_MAX_POS);
-    MENU_ITEM_EDIT(float3_signed, "Y Offset", &add_homeing[1], -Y_MAX_POS, Y_MAX_POS); //jkl;
-    MENU_ITEM_EDIT(float3_signed, "Z Offset", &add_homeing[2], -Z_MAX_POS, Z_MAX_POS);
+    MENU_ITEM_EDIT(float3_signed, "X Offset", &add_homeing[0], -X_MAX_POS, X_MAX_POS); //jkl;
+    MENU_ITEM_EDIT(float3_signed, "Y Offset", &add_homeing[1], -Y_MAX_POS, Y_MAX_POS);
+    MENU_ITEM_EDIT(float32, "Z Offset", &add_homeing[2], -Z_MAX_POS, Z_MAX_POS);
     END_MENU();  
 }
 
@@ -1275,20 +1280,20 @@ bool moveHead = false;
 //  Point list for bed leveling script
 const uint16_t LEVEL_POINTS[][2] = {
     { BED_LEVEL_Z_LIFT, 4 },        //  First record is { Z_LIFT, NUM_POINTS }
-    { X_MIN_POS+35+add_homeing[0], Y_CENTER_POS-50+add_homeing[1] },
-    { X_MIN_POS+35+add_homeing[0], Y_CENTER_POS+50+add_homeing[1] },
-    { X_MAX_POS-35+add_homeing[0], Y_CENTER_POS+50+add_homeing[1] },
-    { X_MAX_POS-35+add_homeing[0], Y_CENTER_POS-50+add_homeing[1] }
+    { X_MIN_POS+35, Y_CENTER_POS-50 }, //jkl;********
+    { X_MIN_POS+35, Y_CENTER_POS+50 },
+    { X_MAX_POS-35, Y_CENTER_POS+50 },
+    { X_MAX_POS-35, Y_CENTER_POS-50 }
 };
 
 //  Point list for bed leveling extents script
 const uint16_t LEVEL_EXTENTS[][2] = {
     { BED_LEVEL_Z_LIFT, 5 },        //  First record is { Z_LIFT, NUM_POINTS }
-    { X_MIN_POS+10+add_homeing[0], Y_MIN_POS+10+add_homeing[1] },
-    { X_MIN_POS+10+add_homeing[0], Y_MAX_POS-10+add_homeing[1] },
-    { X_MAX_POS-10+add_homeing[0], Y_MAX_POS-10+add_homeing[1] },
-    { X_MAX_POS-10+add_homeing[0], Y_MIN_POS+10+add_homeing[1] },
-    { X_CENTER_POS+add_homeing[0], Y_CENTER_POS+add_homeing[1] }
+    { X_MIN_POS+10, Y_MIN_POS+10 },
+    { X_MIN_POS+10, Y_MAX_POS-10 },
+    { X_MAX_POS-10, Y_MAX_POS-10 },
+    { X_MAX_POS-10, Y_MIN_POS+10 },
+    { X_CENTER_POS, Y_CENTER_POS }
 };
 
 static void lcd_bed_level_run();    //  Function prototype
@@ -2100,18 +2105,10 @@ char *itostr2(const uint8_t &x)
 }
 
 //  convert float to string with +/-123 format
-char *ftostr3_signed(const float &x)
+char *ftostr3_signed(const float &x) //jkl;
 {
-  MYSERIAL.print("* x:");
-  MYSERIAL.print(x,HEX);
-  MYSERIAL.print(" xx:");
-  // 01234
-  // +100
-  //  +10
-  //   +0
   signed int xx=x;
-  MYSERIAL.print(xx,HEX);
-  char sign = (xx>=0)?'+':'-';
+  char sign = (xx>=0)?' ':'-'; //jkl;*****
   xx=abs(xx);
   conv[4] = 0;
   conv[3] = (xx)%10+'0';
@@ -2131,8 +2128,6 @@ char *ftostr3_signed(const float &x)
     conv[1] = ' ';
     conv[0] = ' ';
   }
-  MYSERIAL.print(" conv:");
-  MYSERIAL.println(conv);
   return conv;
 }
 
@@ -2169,17 +2164,17 @@ char *ftostr31ns(const float &x)
 char *ftostr32(const float &x)
 {
   long xx=x*100;
-  if (xx >= 0)
-    conv[0]=(xx/10000)%10+'0';
-  else
-    conv[0]='-';
+  uint8_t pos = 0;
+  if(xx < 0) conv[pos++]='-';
+  else conv[pos++] = ' ';
   xx=abs(xx);
-  conv[1]=(xx/1000)%10+'0';
-  conv[2]=(xx/100)%10+'0';
-  conv[3]='.';
-  conv[4]=(xx/10)%10+'0';
-  conv[5]=(xx)%10+'0';
-  conv[6]=0;
+  conv[pos++]=(xx/10000)%10+'0';
+  conv[pos++]=(xx/1000)%10+'0';
+  conv[pos++]=(xx/100)%10+'0';
+  conv[pos++]='.';
+  conv[pos++]=(xx/10)%10+'0';
+  conv[pos++]=(xx)%10+'0';
+  conv[pos++]=0;
   return conv;
 }
 
@@ -2195,18 +2190,26 @@ char *itostr31(const int &xx)
   return conv;
 }
 
-char *itostr3(const int &xx)
+char *itostr3(const int &x) //jkl; 
 {
-  if (xx >= 100)
-    conv[0]=(xx/100)%10+'0';
-  else
-    conv[0]=' ';
-  if (xx >= 10)
-    conv[1]=(xx/10)%10+'0';
-  else
-    conv[1]=' ';
-  conv[2]=(xx)%10+'0';
+  int xx = x;
+  char sign = (xx>=0)?' ':'-';
+  xx = (xx>= 0)?xx:(~xx+1);
   conv[3]=0;
+  conv[2]=(xx)%10+'0';
+  if(xx >= 10){
+    conv[1] = (xx/10)%10+'0';
+    if(xx >= 100){
+        conv[0] = (xx/100)%10 +'0';
+    }
+    else{
+        conv[0] = sign;
+    }
+  }
+  else{
+    conv[1] = sign;
+    conv[0] = ' ';
+  }
   return conv;
 }
 
