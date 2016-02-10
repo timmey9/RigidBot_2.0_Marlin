@@ -170,7 +170,24 @@ void Config_PrintSettings()
     SERIAL_ECHOPAIR("   M301 P",Kp); 
     SERIAL_ECHOPAIR(" I" ,unscalePID_i(Ki)); 
     SERIAL_ECHOPAIR(" D" ,unscalePID_d(Kd));
-    SERIAL_ECHOLN(""); 
+    SERIAL_ECHOLN("");
+
+    SERIAL_ECHO_START;
+    SERIAL_ECHOLNPGM("Driver Settings:");
+    SERIAL_ECHO_START;
+    SERIAL_ECHO(" X");
+    SERIAL_ECHOLN(driverX);
+    SERIAL_ECHO_START;
+    SERIAL_ECHO(" Y");
+    SERIAL_ECHOLN(driverY);
+    SERIAL_ECHO_START;
+    SERIAL_ECHO(" Z");
+    SERIAL_ECHOLN(driverZ);
+    SERIAL_ECHO_START;
+    SERIAL_ECHO(" E");
+    SERIAL_ECHOLN(driverE);
+    
+    SERIAL_ECHOLN("");
 #endif
 } 
 #endif

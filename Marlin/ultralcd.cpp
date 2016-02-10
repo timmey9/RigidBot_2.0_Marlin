@@ -260,9 +260,9 @@ static void lcd_status_screen()
         if ( lcdShowAbout )
             lcd_show_about_cancel();
         else if(buttons&B_RI) 
-            currentMenu = lcd_main_menu;
-        else
             currentMenu = lcd_quick_menu;
+        else
+            currentMenu = lcd_main_menu;
     }
 
 
@@ -345,7 +345,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     // move bed forward (Y axis) and extruder out of the way (X axis)
     sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS+add_homeing[1])); // G162
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS)); // G162 // add the add_homeing[1] offset here
     enquecommand(strTemp);
 
     
@@ -399,7 +399,8 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
 }
 static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
-    
+    cancel_command = true;
+
     oldX = current_position[X_AXIS];
     oldY = current_position[Y_AXIS];
     oldZ = current_position[Z_AXIS];
@@ -414,7 +415,7 @@ static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF
     enquecommand(strTemp);
 
     // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), (Y_MAX_POS+add_homeing[1]));
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), Y_MAX_POS); // add the add_homeing[1] offset here
     enquecommand(strTemp);
     
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
@@ -462,8 +463,8 @@ static void lcd_move_origin_return(){
 static void lcd_move_origin(){
     START_MENU();
     MENU_ITEM_BACK(back, MSG_CONTROL, lcd_move_origin_return); // runs the "lcd_move_origin_return" function and then returns to "lcd_control_menu"
-    MENU_ITEM_EDIT(float3_signed, "X Offset", &add_homeing[0], -X_MAX_POS, X_MAX_POS); //jkl;
-    MENU_ITEM_EDIT(float3_signed, "Y Offset", &add_homeing[1], -Y_MAX_POS, Y_MAX_POS);
+    MENU_ITEM_EDIT(float32, "X Offset", &add_homeing[0], -X_MAX_POS, X_MAX_POS); //jkl;
+    MENU_ITEM_EDIT(float32, "Y Offset", &add_homeing[1], -Y_MAX_POS, Y_MAX_POS);
     MENU_ITEM_EDIT(float32, "Z Offset", &add_homeing[2], -Z_MAX_POS, Z_MAX_POS);
     END_MENU();  
 }

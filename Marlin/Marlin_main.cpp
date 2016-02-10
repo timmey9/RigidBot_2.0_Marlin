@@ -197,6 +197,8 @@ int EtoPPressure=0;
   float retract_recover_length=0, retract_recover_feedrate=8*60;
 #endif
 
+bool cancel_command = false;
+
 //bool customSettings = 0;
 
 //===========================================================================
@@ -1294,7 +1296,8 @@ void process_commands()
         while((residencyStart == -1) ||
               (residencyStart >= 0 && (((unsigned int) (millis() - residencyStart)) < (TEMP_RESIDENCY_TIME * 1000UL))) ) {
       #else
-        while ( target_direction ? (isHeatingHotend(tmp_extruder)) : (isCoolingHotend(tmp_extruder)&&(CooldownNoWait==false)) ) {
+        cancel_command = false;
+        while ( !cancel_command && target_direction ? (isHeatingHotend(tmp_extruder)) : (isCoolingHotend(tmp_extruder)&&(CooldownNoWait==false)) ) {
       #endif //TEMP_RESIDENCY_TIME
           if( (millis() - codenum) > 1000UL )
           { //Print Temp Reading and remaining time every 1 second while heating up/cooling down
@@ -1332,6 +1335,7 @@ void process_commands()
           }
         #endif //TEMP_RESIDENCY_TIME
         }
+        cancel_command = false;
         bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
         LCD_MESSAGEPGM(MSG_HEATING_COMPLETE);
         starttime=millis();
@@ -1345,7 +1349,8 @@ void process_commands()
         if (code_seen('S')) setTargetBed(code_value());
         
         codenum = millis();
-        while(isHeatingBed())
+        cancel_command = false;
+        while(isHeatingBed() && !cancel_command)
         {
           if(( millis() - codenum) > 1000 ) //Print Temp Reading every 1 second while heating up.
           {
@@ -1363,6 +1368,7 @@ void process_commands()
           manage_inactivity();
           lcd_update();
         }
+        cancel_command = false;
         bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
         LCD_MESSAGEPGM(MSG_BED_DONE);
         previous_millis_cmd = millis();

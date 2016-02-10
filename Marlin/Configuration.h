@@ -2,7 +2,7 @@
 #define CONFIGURATION_H
 
 //	Uncomment the following options for your machine
-#define	RIGIDBOT_BIG // large x/y area
+//#define	RIGIDBOT_BIG // large x/y area
 //#define RIGIDBOT_XL // larger z height
 //#define	RIGIDBOT_DUAL_EXTRUDER // two extruders
 
@@ -19,10 +19,10 @@
 #define DAC_MIN 0 // 0.000 volts
 #define DAC_MAX 5000 // 5.000 volts
 #define DAC_SCALAR 50
-#define DEFAULT_DRIVER_X 50*DAC_SCALAR
-#define DEFAULT_DRIVER_Y 50*DAC_SCALAR
-#define DEFAULT_DRIVER_Z 75*DAC_SCALAR
-#define DEFAULT_DRIVER_E 50*DAC_SCALAR
+#define DEFAULT_DRIVER_X 50*DAC_SCALAR // 50%
+#define DEFAULT_DRIVER_Y 50*DAC_SCALAR // 50%
+#define DEFAULT_DRIVER_Z 75*DAC_SCALAR // 75%
+#define DEFAULT_DRIVER_E 50*DAC_SCALAR // 50%
 #endif
 
 
@@ -42,8 +42,7 @@
 #define SERIAL_PORT 0
 
 // This determines the communication speed of the printer
-//#define BAUDRATE 250000
-#define BAUDRATE 115200
+#define BAUDRATE 250000
 
 //// The following define selects which electronics board you have. Please choose the one that matches your setup
 // 10 = Gen7 custom (Alfons3 Version) "https://github.com/Alfons3/Generation_7_Electronics"
@@ -361,14 +360,15 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 //// MOVEMENT SETTINGS
 #define NUM_AXIS 4 // The axis order in all axis related arrays is X, Y, Z, E
-#define HOMING_FEEDRATE {5000, 5000, 5000, 0}  // set the homing speeds (mm/min)
+#define HOMING_FEEDRATE {5000, 5000, 5000, 0}  // set the homing velocities (mm/sec)
 
 // default settings
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.3090,44.3090,1600,53.5} // default steps per unit for Rigidbot
-#define DEFAULT_MAX_FEEDRATE          {700, 500, 4, 25}    // (mm/sec), velocity
-#define DEFAULT_MAX_ACCELERATION      {1200,600,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.3090,44.3090,1600,53.5} // default steps per unit (mm) for Rigidbot
+#define DEFAULT_MAX_FEEDRATE          {700, 700, 4, 25}    // max velocity (mm/sec)
+//#define DEFAULT_MAX_ACCELERATION      {2000,600,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
+#define DEFAULT_MAX_ACCELERATION      {3000,3000,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 
-#define DEFAULT_ACCELERATION          600    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
+#define DEFAULT_ACCELERATION          2300    // X, Y, Z and E max acceleration in mm/s^2 for printing moves
 #define DEFAULT_RETRACT_ACCELERATION  1000   // X, Y, Z and E max acceleration in mm/s^2 for r retracts
 
 // Offset of the extruders (uncomment if using more than one and relying on firmware to position when changing).
