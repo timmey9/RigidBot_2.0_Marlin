@@ -1126,6 +1126,7 @@ static void lcd_jog_e()
 
 static void lcd_jog_menu()
 {
+    lastMenu = lcd_jog_menu;
     START_MENU();
     MENU_ITEM_BACK(back, MSG_MOVE_AXIS, lcd_move_menu);
     MENU_ITEM(submenu, "Jog Z", lcd_jog_z);
@@ -1723,6 +1724,7 @@ void lcd_sdcard_menu()
 
 
 static void lcd_quick_menu(){
+    lastMenu = lcd_quick_menu;
     START_MENU();
     MENU_ITEM_BACK(back, MSG_WATCH, lcd_status_screen);
     MENU_ITEM(submenu, "Jog Z", lcd_jog_z);

@@ -35,7 +35,7 @@
 
   #define ENCODER_COARSE_STEP			10				//	step increment for coarse adjustments
 
-  #define BUTTON_REPEAT_DELAY			500
+  #define BUTTON_REPEAT_DELAY			1000
 
   #define JOG_XY_SPEED		50
   #define JOG_XY_INC		3

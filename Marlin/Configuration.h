@@ -402,12 +402,12 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 
 
 // Preheat Constants
-#define PLA_PREHEAT_HOTEND_TEMP     200
+#define PLA_PREHEAT_HOTEND_TEMP     215
 #define PLA_PREHEAT_HPB_TEMP		    40
 #define PLA_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
 #define ABS_PREHEAT_HOTEND_TEMP		  230
-#define ABS_PREHEAT_HPB_TEMP		    70
+#define ABS_PREHEAT_HPB_TEMP		    100
 #define ABS_PREHEAT_FAN_SPEED		    0   // Insert Value between 0 and 255
 
 //#define LCD_HAS_SLOW_BUTTONS // increases the debounce time so you don't get double clicks when the user actually clicked once. 
