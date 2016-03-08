@@ -356,7 +356,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
         enquecommand(strTemp);
         lcdDrawUpdate = 2;
     }
-    bedLeds.setLedSources(LED_BLINK1, LED_BLINK1, LED_OFF);
+    bedLeds.setLedSources(LED_ON, LED_ON, LED_OFF);
 }
 void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
@@ -380,6 +380,7 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
     enquecommand(strTemp);
 
     // un-retract extruder (E axis)
+    current_position[E_AXIS] = oldE-4.0;
     sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE));
     enquecommand(strTemp);
 
@@ -1683,7 +1684,7 @@ static void lcd_sd_updir()
     currentMenuViewOffset = 0;
 }
 
-void lcd_sdcard_menu()
+void lcd_sdcard_menu() // jkl;
 {
     lcdFastUpdate = true;
     
@@ -1885,6 +1886,7 @@ static void menu_action_setting_edit_bool(const char* pstr, bool* ptr)
 /** LCD API **/
 void lcd_init()
 {
+
     lcd_implementation_init();
   #if BTN_ENC > 0
     pinMode(BTN_ENC,INPUT); 
@@ -2115,7 +2117,7 @@ char *itostr2(const uint8_t &x)
 }
 
 //  convert float to string with +/-123 format
-char *ftostr3_signed(const float &x) //jkl;
+char *ftostr3_signed(const float &x) 
 {
   signed int xx=x;
   char sign = (xx>=0)?' ':'-'; //jkl;*****

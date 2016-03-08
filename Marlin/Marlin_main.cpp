@@ -519,7 +519,7 @@ void loop()
       process_commands();
     #endif //SDSUPPORT
 
-    //MYSERIAL.println("********************"); //jkl;
+    //MYSERIAL.println("********************"); 
     //MYSERIAL.print("buflen: ");
     //MYSERIAL.print(buflen);
     //MYSERIAL.print("  Head:");
@@ -564,7 +564,7 @@ void get_command()
       /*
       // detect layer changes
       if(curr_z_height != current_position[Z_AXIS] && buflen < (BUFSIZE-3)){
-        //MYSERIAL.println("Z change"); //jkl;
+        //MYSERIAL.println("Z change"); 
         
         curr_z_height = current_position[Z_AXIS];
       
@@ -573,7 +573,7 @@ void get_command()
 
         // home X and Y axis between layers
         if(autohome_between_layers && curr_mod_height < prev_mod_height ){
-          // MYSERIAL.println("Home at layer change"); // jkl;
+          // MYSERIAL.println("Home at layer change"); 
           float oldX = current_position[X_AXIS];
           float oldY = current_position[Y_AXIS];
           float oldZ = current_position[Z_AXIS];
@@ -596,7 +596,7 @@ void get_command()
       /*
       // disable hbp at height
       if(disable_hbp_at_height && current_position[Z_AXIS] > height_var){ // if "disable heated bed at height" is enabled, and the height is greater than the set height, then insert command to turn off heated bed
-        //MYSERIAL.println("HBP turned off"); //jkl;
+        //MYSERIAL.println("HBP turned off"); 
         char strTemp[20];
         sprintf_P(strTemp, PSTR("M140 S%s"), ftostr74(new_bed_temp)); // change bed temp
         enquecommand(strTemp);
@@ -1336,7 +1336,7 @@ void process_commands()
         #endif //TEMP_RESIDENCY_TIME
         }
         cancel_command = false;
-        bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
+        bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
         LCD_MESSAGEPGM(MSG_HEATING_COMPLETE);
         starttime=millis();
         previous_millis_cmd = millis();
@@ -1369,7 +1369,7 @@ void process_commands()
           lcd_update();
         }
         cancel_command = false;
-        bedLeds.setLedSources(LED_OFF, LED_BLINK0, LED_BLINK0);
+        bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
         LCD_MESSAGEPGM(MSG_BED_DONE);
         previous_millis_cmd = millis();
     #endif

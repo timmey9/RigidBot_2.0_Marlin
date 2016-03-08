@@ -1062,7 +1062,7 @@ ISR(TIMER0_COMPB_vect)
   pwm_count &= 0x7f;
   pwn_count_b &= 0x7ff;
   
-  switch(temp_state) {
+  switch(temp_state) {  //jkl; if the buttons misses are going to be fixed, it will be through this function.
     case 0: // Prepare TEMP_0
       #if defined(TEMP_0_PIN) && (TEMP_0_PIN > -1)
         #if TEMP_0_PIN > 7
