@@ -363,7 +363,7 @@ const bool Z_ENDSTOPS_INVERTING = true; // set to true to invert the logic of th
 #define HOMING_FEEDRATE {5000, 5000, 5000, 0}  // set the homing velocities (mm/sec)
 
 // default settings
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.628323,44.628323,1600,53.5} // default steps per unit (mm) for Rigidbot
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {44.628323,44.628323,1600,53.5} // default steps per unit (mm) for Rigidbot //{44.3090, 44.3090, 1600, 53.5}
 #define DEFAULT_MAX_FEEDRATE          {700, 700, 4, 25}    // max velocity (mm/sec)
 //#define DEFAULT_MAX_ACCELERATION      {2000,600,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
 #define DEFAULT_MAX_ACCELERATION      {3000,3000,100,10000}    // X, Y, Z, E maximum start speed for accelerated moves. E default values are good for skeinforge 40+, for older versions raise them a lot.
