@@ -1400,12 +1400,28 @@ void process_commands()
         break;
       }
       case 107: //M107 Fan Off
-        fanSpeed = 0;
-        analogWrite(FAN_PIN0, 0);
+      {
+        int fanNumber = -1;
+        if(code_seen('F')){
+            fanNumber = constrain(code_value(),0,1);
+        }
+        if(fanNumber == 0) {
+          fanSpeed = 0;
+          analogWrite(FAN_PIN0, 0);
+        }
         #if defined(FAN_PIN1) && FAN_PIN1 > -1
-        analogWrite(FAN_PIN1, 0);
+        else if(fanNumber == 1){
+          analogWrite(FAN_PIN1, 0);
+        }
         #endif //FAN_PIN1
+        else{
+          fanSpeed = 0;
+          analogWrite(FAN_PIN0, 0);
+          analogWrite(FAN_PIN1, 0);
+        }
+        
         break;
+      }
     #endif //FAN_PIN0
     #ifdef BARICUDA
       // PWM for HEATER_1_PIN

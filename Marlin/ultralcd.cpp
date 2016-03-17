@@ -253,16 +253,20 @@ static void lcd_status_screen()
     }
 
     // if right button clicked
-    if (LCD_CLICKED || buttons&B_RI) //jkl;
+    if (LCD_CLICKED || buttons&B_RI)
     {
         encoderPosition = 0;
         lcd_quick_feedback();
         if ( lcdShowAbout )
             lcd_show_about_cancel();
-        else if(buttons&B_RI) 
+        else if(buttons&B_RI){
             currentMenu = lcd_quick_menu;
-        else
+            lcd_implementation_init(); // to maybe revive the lcd if static electricity killed it.
+        }
+        else{
             currentMenu = lcd_main_menu;
+            lcd_implementation_init(); // to maybe revive the lcd if static electricity killed it.
+        }
     }
 
 

@@ -3,7 +3,7 @@
 
 //	Uncomment the following options for your machine
 //#define	RIGIDBOT_BIG // large x/y area
-//#define RIGIDBOT_XL // larger z height
+//#define   RIGIDBOT_XL // larger z height
 //#define	RIGIDBOT_DUAL_EXTRUDER // two extruders
 
 #define RIGIDBOARD
