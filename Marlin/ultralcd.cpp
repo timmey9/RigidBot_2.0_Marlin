@@ -323,6 +323,7 @@ static float   oldZ;
 static float   oldE;
 static float   oldFeedrate;
 static bool    using_sd_card = false;
+static bool    paused = false;
 
 static void lcd_return_to_status()
 {
@@ -332,6 +333,7 @@ static void lcd_return_to_status()
 
 void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
+    paused = true;
     oldX = current_position[X_AXIS];
     oldY = current_position[Y_AXIS];
     oldZ = current_position[Z_AXIS];
@@ -347,9 +349,9 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     enquecommand(strTemp);
 
     // move bed forward (Y axis) and extruder out of the way (X axis)
-    sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162
+    sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162-home axes to maximum
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS)); // G162 // add the add_homeing[1] offset here
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-1.0)); // G162 // add the add_homeing[1] offset here
     enquecommand(strTemp);
 
     
@@ -364,6 +366,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
 }
 void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
+    paused = false;
     // move X and Y axis to zero quickly
     //sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
     //enquecommand(strTemp);
@@ -405,24 +408,24 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
 static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
 {
     cancel_command = true;
+    if(!paused){
+        oldX = current_position[X_AXIS];
+        oldY = current_position[Y_AXIS];
+        oldZ = current_position[Z_AXIS];
+        oldE = current_position[E_AXIS];
+        
+        // retract extruder (E axis)
+        sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-4.0));
+        enquecommand(strTemp);
 
-    oldX = current_position[X_AXIS];
-    oldY = current_position[Y_AXIS];
-    oldZ = current_position[Z_AXIS];
-    oldE = current_position[E_AXIS];
-    
-    // retract extruder (E axis)
-    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE-4.0));
-    enquecommand(strTemp);
+        //raise extruder (Z axis)
+        sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ+10.0));
+        enquecommand(strTemp);
 
-    //raise extruder (Z axis)
-    sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ+10.0));
-    enquecommand(strTemp);
-
-    // move bed forward (Y axis), move extruder out of way (X axis)
-    sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), Y_MAX_POS); // add the add_homeing[1] offset here
-    enquecommand(strTemp);
-    
+        // move bed forward (Y axis), move extruder out of way (X axis)
+        sprintf_P(strTemp, PSTR("G0 F5000 Y%d X3.0"), Y_MAX_POS-1.0); // add the add_homeing[1] offset here
+        enquecommand(strTemp);
+    }
     sprintf_P(strTemp, PSTR("M104 S0")); // turn off extruder
     enquecommand(strTemp);
 
@@ -484,10 +487,12 @@ static void lcd_main_menu()
     {
         if (card.isFileOpen())
         {
-            if (card.sdprinting)
+            if (card.sdprinting){
                 MENU_ITEM(function, MSG_PAUSE_PRINT, lcd_sdcard_pause);
-            else
+            }
+            else{
                 MENU_ITEM(function, MSG_RESUME_PRINT, lcd_sdcard_resume);
+            }
             MENU_ITEM(function, MSG_STOP_PRINT, lcd_sdcard_stop);
         }else{
             MENU_ITEM(submenu, MSG_CARD_MENU, lcd_sdcard_menu);

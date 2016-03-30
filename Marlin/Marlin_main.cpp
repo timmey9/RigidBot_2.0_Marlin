@@ -281,33 +281,61 @@ extern "C"{
 //adds an command to the main command buffer
 //thats really done in a non-safe way.
 //needs overworking someday
-void enquecommand(const char *cmd)
+void enquecommand(const char *cmd, bool tail)
 {
-  if(buflen < BUFSIZE)
+  if(buflen < BUFSIZE) //this is dangerous if a mixing of serial and this happens
   {
-    //this is dangerous if a mixing of serial and this happsens
-    strcpy(&(cmdbuffer[bufindw][0]),cmd);
-    SERIAL_ECHO_START;
-    SERIAL_ECHOPGM("enqueing \"");
-    SERIAL_ECHO(cmdbuffer[bufindw]);
-    SERIAL_ECHOLNPGM("\"");
-    bufindw= (bufindw + 1)%BUFSIZE;
-    buflen += 1;
+    if(tail){
+      strcpy(&(cmdbuffer[bufindw][0]),cmd);
+      SERIAL_ECHO_START;
+      SERIAL_ECHOPGM("enqueing tail\"");
+      SERIAL_ECHO(cmdbuffer[bufindw]);
+      SERIAL_ECHOLNPGM("\"");
+      bufindw= (bufindw + 1)%BUFSIZE;
+      buflen += 1;
+    }
+    else{
+      // calculate new head ptr
+      int tempPtr = bufindr - 1;
+      if(tempPtr < 0) bufindr = BUFSIZE-1;
+      else bufindr = tempPtr;
+
+      strcpy(&(cmdbuffer[bufindr][0]),cmd);
+      SERIAL_ECHO_START;
+      SERIAL_ECHOPGM("enqueing head\"");
+      SERIAL_ECHO(cmdbuffer[bufindr]);
+      SERIAL_ECHOLNPGM("\"");
+      buflen += 1;
+    }
   }
 }
 
-void enquecommand_P(const char *cmd)
+void enquecommand_P(const char *cmd, bool tail)
 {
-  if(buflen < BUFSIZE)
+  if(buflen < BUFSIZE)//this is dangerous if a mixing of serial and this happens
   {
-    //this is dangerous if a mixing of serial and this happsens
-    strcpy_P(&(cmdbuffer[bufindw][0]),cmd);
-    SERIAL_ECHO_START;
-    SERIAL_ECHOPGM("enqueing \"");
-    SERIAL_ECHO(cmdbuffer[bufindw]);
-    SERIAL_ECHOLNPGM("\"");
-    bufindw= (bufindw + 1)%BUFSIZE;
-    buflen += 1;
+    if(tail){
+      strcpy_P(&(cmdbuffer[bufindw][0]),cmd);
+      SERIAL_ECHO_START;
+      SERIAL_ECHOPGM("enqueing \"");
+      SERIAL_ECHO(cmdbuffer[bufindw]);
+      SERIAL_ECHOLNPGM("\"");
+      bufindw= (bufindw + 1)%BUFSIZE;
+      buflen += 1;
+    }
+    else{
+      // calculate new head ptr
+      int tempPtr = bufindr-1;
+      if(tempPtr < 0) bufindr = BUFSIZE-1;
+      else bufindr = tempPtr;
+
+      strcpy_P(&(cmdbuffer[bufindr][0]),cmd);
+      SERIAL_ECHO_START;
+      SERIAL_ECHOPGM("enqueing head\"");
+      SERIAL_ECHO(cmdbuffer[bufindr]);
+      SERIAL_ECHOLNPGM("\"");
+      buflen += 1;
+    }
   }
 }
 
@@ -472,23 +500,17 @@ void setup()
   #ifdef HOME_ON_STARTUP
     enquecommand("G28 X Y"); // home X/Y axes on startup
   #endif
-  pinMode(11,OUTPUT); //delete
-  digitalWrite(11,LOW); //delete
 }
 
 
 void loop()
 {
-  
-  //digitalWrite(11,HIGH);
-  //delay(2000);
-  //digitalWrite(11,LOW);
-  if(get_block_buffer_len() < BUF_FILL_SIZE)
+  if(buflen < BUF_FILL_SIZE)
     get_command();
   #ifdef SDSUPPORT
   card.checkautostart(false);
   #endif
-  if(buflen)
+  if(buflen && movesplanned() < BLOCK_BUF_FILL_SIZE)
   {
     #ifdef SDSUPPORT
       if(card.saving)
@@ -519,9 +541,11 @@ void loop()
       process_commands();
     #endif //SDSUPPORT
 
-    //MYSERIAL.println("********************"); 
-    //MYSERIAL.print("buflen: ");
-    //MYSERIAL.print(buflen);
+    MYSERIAL.println("********************"); 
+    MYSERIAL.print("buflen:");
+    MYSERIAL.print(buflen);
+    MYSERIAL.print(" blockBufLen:");
+    MYSERIAL.println(movesplanned(), DEC);
     //MYSERIAL.print("  Head:");
     //MYSERIAL.print(bufindr);
     //MYSERIAL.print("  Tail:");

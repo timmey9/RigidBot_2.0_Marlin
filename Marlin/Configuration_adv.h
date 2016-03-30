@@ -300,8 +300,10 @@ const unsigned int dropsegments=5; //everything with less than this number of st
 // THE BLOCK_BUFFER_SIZE NEEDS TO BE A POWER OF 2, i.e. 8,16,32 because shifts and ors are used to do the ringbuffering.
 #if defined SDSUPPORT
   #define BLOCK_BUFFER_SIZE 8 // SD,LCD,Buttons take more memory, block buffer needs to be smaller
+  #define BLOCK_BUF_FILL_SIZE 1
 #else                         //
   #define BLOCK_BUFFER_SIZE 8 // maximize block buffer
+  #define BLOCK_BUF_FILL_SIZE 1
 #endif
 
 
