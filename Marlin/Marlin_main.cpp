@@ -288,7 +288,7 @@ void enquecommand(const char *cmd, bool tail)
     if(tail){
       strcpy(&(cmdbuffer[bufindw][0]),cmd);
       SERIAL_ECHO_START;
-      SERIAL_ECHOPGM("enqueing tail\"");
+      SERIAL_ECHOPGM("enqueing tail \"");
       SERIAL_ECHO(cmdbuffer[bufindw]);
       SERIAL_ECHOLNPGM("\"");
       bufindw= (bufindw + 1)%BUFSIZE;
@@ -302,7 +302,7 @@ void enquecommand(const char *cmd, bool tail)
 
       strcpy(&(cmdbuffer[bufindr][0]),cmd);
       SERIAL_ECHO_START;
-      SERIAL_ECHOPGM("enqueing head\"");
+      SERIAL_ECHOPGM("enqueing head \"");
       SERIAL_ECHO(cmdbuffer[bufindr]);
       SERIAL_ECHOLNPGM("\"");
       buflen += 1;
@@ -317,7 +317,7 @@ void enquecommand_P(const char *cmd, bool tail)
     if(tail){
       strcpy_P(&(cmdbuffer[bufindw][0]),cmd);
       SERIAL_ECHO_START;
-      SERIAL_ECHOPGM("enqueing \"");
+      SERIAL_ECHOPGM("enqueing tail \"");
       SERIAL_ECHO(cmdbuffer[bufindw]);
       SERIAL_ECHOLNPGM("\"");
       bufindw= (bufindw + 1)%BUFSIZE;
@@ -331,7 +331,7 @@ void enquecommand_P(const char *cmd, bool tail)
 
       strcpy_P(&(cmdbuffer[bufindr][0]),cmd);
       SERIAL_ECHO_START;
-      SERIAL_ECHOPGM("enqueing head\"");
+      SERIAL_ECHOPGM("enqueing head \"");
       SERIAL_ECHO(cmdbuffer[bufindr]);
       SERIAL_ECHOLNPGM("\"");
       buflen += 1;
@@ -541,11 +541,11 @@ void loop()
       process_commands();
     #endif //SDSUPPORT
 
-    MYSERIAL.println("********************"); 
-    MYSERIAL.print("buflen:");
-    MYSERIAL.print(buflen);
-    MYSERIAL.print(" blockBufLen:");
-    MYSERIAL.println(movesplanned(), DEC);
+    //MYSERIAL.println("********************"); 
+    //MYSERIAL.print("buflen:");
+    //MYSERIAL.print(buflen);
+    //MYSERIAL.print(" blockBufLen:");
+    //MYSERIAL.println(movesplanned(), DEC);
     //MYSERIAL.print("  Head:");
     //MYSERIAL.print(bufindr);
     //MYSERIAL.print("  Tail:");

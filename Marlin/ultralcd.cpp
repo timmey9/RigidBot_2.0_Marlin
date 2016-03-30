@@ -332,8 +332,7 @@ static void lcd_return_to_status()
 }
 
 void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
-{
-    paused = true;
+{   
     oldX = current_position[X_AXIS];
     oldY = current_position[Y_AXIS];
     oldZ = current_position[Z_AXIS];
@@ -351,7 +350,7 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     // move bed forward (Y axis) and extruder out of the way (X axis)
     sprintf_P(strTemp, PSTR("G0 X3.0 F9000") ); // G162-home axes to maximum
     enquecommand(strTemp);
-    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS-1.0)); // G162 // add the add_homeing[1] offset here
+    sprintf_P(strTemp, PSTR("G0 Y%s F5000"), ftostr74(Y_MAX_POS - 1.0)); // G162 // add the add_homeing[1] offset here
     enquecommand(strTemp);
 
     
@@ -365,12 +364,11 @@ void lcd_sdcard_pause() // Note: cannot add more commands than BUFSIZE-BUF_FILL_
     bedLeds.setLedSources(LED_ON, LED_ON, LED_OFF);
 }
 void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
-{
-    paused = false;
+{   
     // move X and Y axis to zero quickly
     //sprintf_P(strTemp, PSTR("G0 F9000 Y1.0 X1.0"));
     //enquecommand(strTemp);
-    
+    /*
     // home Y, then X, just to make sure nothing was messed up
     sprintf_P(strTemp, PSTR("G28 X Y"));
     enquecommand(strTemp);
@@ -394,15 +392,41 @@ void lcd_sdcard_resume() // Note: cannot add more commands than BUFSIZE-BUF_FILL
     sprintf_P(strTemp, PSTR("G0 F%s"), ftostr6(oldFeedrate));
     enquecommand(strTemp);   
 
+    */
+
+
 
     // resume the print
     if(using_sd_card) {
         using_sd_card = false;
         //card.startFileprint();
         sprintf_P(strTemp, PSTR("M24 R")); // resume SD card
-        enquecommand(strTemp);
+        enquecommand(strTemp, false);
         lcdDrawUpdate = 2;
     }
+
+    sprintf_P(strTemp, PSTR("G0 F%s"), ftostr6(oldFeedrate));
+    enquecommand(strTemp, false);
+
+    // un-retract extruder (E axis)
+    current_position[E_AXIS] = oldE-4.0;
+    sprintf_P(strTemp, PSTR("G1 E%s F1800"), ftostr74(oldE));
+    enquecommand(strTemp, false);
+
+    // return Z to original position before the pause
+    sprintf_P(strTemp, PSTR("G0 Z%s"), ftostr74(oldZ));
+    enquecommand(strTemp, false);
+    
+    // return X and Y to original position before the pause
+    sprintf_P(strTemp, PSTR("G0 F5000 Y%s"), ftostr52(oldY));
+    enquecommand(strTemp, false);
+    sprintf_P(strTemp, PSTR("G0 F9000 X%s"), ftostr52(oldX));
+    enquecommand(strTemp, false);
+    
+    // home Y, then X, just to make sure nothing was messed up
+    sprintf_P(strTemp, PSTR("G28 X Y"));
+    enquecommand(strTemp, false);
+
     bedLeds.setLedSources(LED_OFF, LED_ON, LED_ON);
 }
 static void lcd_sdcard_stop() // Note: cannot add more commands than BUFSIZE-BUF_FILL_SIZE.
@@ -487,14 +511,54 @@ static void lcd_main_menu()
     {
         if (card.isFileOpen())
         {
+            /*
             if (card.sdprinting){
+                lcdDrawUpdate = 1;
                 MENU_ITEM(function, MSG_PAUSE_PRINT, lcd_sdcard_pause);
             }
             else{
+                lcdDrawUpdate = 1;
                 MENU_ITEM(function, MSG_RESUME_PRINT, lcd_sdcard_resume);
+            }*/
+            if (card.sdprinting){ // the code (below) is the MENU_ITEM macro expanded, with some minor modifications to quickly give feedback to the user.
+                lcdDrawUpdate = 1;
+                //MENU_ITEM(function, MSG_PAUSE_PRINT, lcd_sdcard_pause);
+                if (_menuItemNr == _lineNr) { 
+                    if ((LCD_CLICKED) && (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) {
+                        lcd_quick_feedback(); 
+                        menu_action_function( lcd_sdcard_pause );
+                        paused = true;
+                    }
+                    if (lcdDrawUpdate) { 
+                        const char* _label_pstr = paused?PSTR(MSG_RESUME_PRINT):PSTR(MSG_PAUSE_PRINT);
+                        if ((encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) lcd_implementation_drawmenu_function_selected (_drawLineNr, _label_pstr , lcd_sdcard_pause ); 
+                        else lcd_implementation_drawmenu_function(_drawLineNr, _label_pstr , lcd_sdcard_pause ); 
+                    }
+                }
+                _menuItemNr++;
             }
+            else{
+                lcdDrawUpdate = 1;
+                //MENU_ITEM(function, MSG_RESUME_PRINT, lcd_sdcard_resume);
+                if (_menuItemNr == _lineNr) { 
+                    if ((LCD_CLICKED) && (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) {
+                        lcd_quick_feedback(); 
+                        menu_action_function( lcd_sdcard_resume );
+                        paused = false;
+                    }
+                    if (lcdDrawUpdate) { 
+                        const char* _label_pstr = paused?PSTR(MSG_RESUME_PRINT):PSTR(MSG_PAUSE_PRINT);
+                        if ((encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) lcd_implementation_drawmenu_function_selected (_drawLineNr, _label_pstr , lcd_sdcard_resume ); 
+                        else lcd_implementation_drawmenu_function(_drawLineNr, _label_pstr , lcd_sdcard_resume ); 
+                    }
+                    
+                }
+                _menuItemNr++;
+            } // the code (above) is the MENU_ITEM macro expanded, with some minor modifications to quickly give feedback to the user.
+            
             MENU_ITEM(function, MSG_STOP_PRINT, lcd_sdcard_stop);
         }else{
+            card.setroot();
             MENU_ITEM(submenu, MSG_CARD_MENU, lcd_sdcard_menu);
 #if SDCARDDETECT < 1
             MENU_ITEM(gcode, MSG_CNG_SDCARD, PSTR("M21"));  // SD-card changed by user
@@ -1700,6 +1764,7 @@ void lcd_sdcard_menu() // jkl;
     uint16_t fileCnt = card.getnrfilenames();
     START_MENU();
     MENU_ITEM_BACK(back, MSG_MAIN, lcd_main_menu);
+
     card.getWorkDirName();
     if(card.filename[0]=='/')
     {
@@ -1707,7 +1772,7 @@ void lcd_sdcard_menu() // jkl;
         MENU_ITEM(function, LCD_STR_REFRESH MSG_REFRESH, lcd_sd_refresh);
 #endif
     }else{
-        MENU_ITEM(function, LCD_STR_FOLDER "..", lcd_sd_updir);
+        MENU_ITEM(function, LCD_STR_FOLDER LCD_STR_UPLEVEL, lcd_sd_updir);
     }
     
 #ifdef LCD_REVERSE_FILE_ORDER
@@ -1716,6 +1781,7 @@ void lcd_sdcard_menu() // jkl;
     for(uint16_t i=0;i<fileCnt;i++)
 #endif
     {
+        //MYSERIAL.print('a'); //jkl;jkl;jkl;
         if (_menuItemNr == _lineNr)
         {
             card.getfilename(i);
@@ -1729,8 +1795,29 @@ void lcd_sdcard_menu() // jkl;
             MENU_ITEM_DUMMY();
         }
     }
+    //MYSERIAL.println("");
     END_MENU();
 }
+
+
+#define MENU_ITEM(type, label, args...) do { \
+    if (_menuItemNr == _lineNr) { \
+        if (lcdDrawUpdate) { \
+            const char* _label_pstr = PSTR(label); \
+            if ((encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) { \
+                lcd_implementation_drawmenu_ ## type ## _selected (_drawLineNr, _label_pstr , ## args ); \
+            }else{\
+                lcd_implementation_drawmenu_ ## type (_drawLineNr, _label_pstr , ## args ); \
+            }\
+        }\
+        if ((LCD_CLICKED) && (encoderPosition / ENCODER_STEPS_PER_MENU_ITEM) == _menuItemNr) {\
+            lcd_quick_feedback(); \
+            menu_action_ ## type ( args ); \
+            return;\
+        }\
+    }\
+    _menuItemNr++;\
+} while(0)
 
 
 static void lcd_quick_menu(){
